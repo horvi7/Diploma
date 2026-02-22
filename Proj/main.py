@@ -1,3 +1,7 @@
 import data_collector as collector
-from prefect import flow
+
+collector.collect_datasets(
+    ["willianoliveiragibin/greenhouse-gas-emissions"],
+    "./data"
+);
 

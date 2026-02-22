@@ -1,0 +1,50 @@
+---
+# Welcome to your prefect.yaml file! You can use this file for
+# storing and managing configuration for deploying your flows.
+# We recommend committing this file to source control along
+# with your flow code.
+
+# Generic metadata about this project
+name: Proj
+prefect-version: 3.6.18
+
+# build section allows you to manage and build docker images
+build: null
+
+# push section allows you to manage if and how this project
+# is uploaded to remote locations
+push: null
+
+# pull section allows you to provide instructions for cloning
+# this project in remote locations
+pull:
+  - prefect.deployments.steps.git_clone:
+      id: clone_repo
+      repository: https://github.com/horvi7/Diploma.git
+      branch: main
+
+  - prefect.deployments.steps.set_working_directory:
+      directory: "{{ clone_repo.directory }}/Proj"
+
+# the deployments section allows you to provide configuration
+# for deploying flows
+deployments:
+  - name: DataCollector
+    version: null
+    tags: []
+    concurrency_limit: null
+    description: null
+    entrypoint: data_collector.py:collect_datasets
+    parameters:
+      dataset_urls:
+        - "willianoliveiragibin/greenhouse-gas-emissions"
+      output_dir: ./data
+    work_pool:
+      name: default-work-pool
+      work_queue_name: null
+      job_variables: {}
+    schedules:
+      - interval: 604800.0
+        anchor_date: "2026-02-22T22:16:28.816036+00:00"
+        timezone: UTC
+        active: true
