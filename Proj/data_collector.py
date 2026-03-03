@@ -5,20 +5,19 @@
 #ez jön vissza: updated profile local
 #prefect server start (ez most már a lokal lesz)
 
-
 from prefect import flow, task
 import kagglehub
 import os
 import pandas as pd
 import json
 
-
 os.environ["KAGGLE_USERNAME"] = "horvthdmmrton"
 os.environ["KAGGLE_KEY"] = "KGAT_2e7fe800a42750e3587f81735f08628b"
 from kaggle.api.kaggle_api_extended import KaggleApi
 
 #@flow
-def collect_datasets(sources: dict):
+def collect_datasets():
+    sources = load_sources()
     for name, url in sources.items():
         print(f"Checking {name} dataset...")
         should_download, version = should_download_dataset(name, url)
@@ -30,13 +29,6 @@ def collect_datasets(sources: dict):
             print(f"{name} dataset is up to date.")
 
 #@task
-def download_dataset(url: str, output_dir: str, version: int):
-    output_dir = f"./data/{output_dir}/{output_dir}_v{version}"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    kagglehub.dataset_download(url, output_dir=output_dir,)
-
 def should_download_dataset(name: str, url: str) -> bool:
     local_version = get_local_version(name)
     remote_version = get_remote_version(url)
@@ -49,6 +41,15 @@ def should_download_dataset(name: str, url: str) -> bool:
 
     return False, None
 
+#@task
+def download_dataset(url: str, output_dir: str, version: int):
+    output_dir = f"./data/{output_dir}/{output_dir}_v{version}"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    kagglehub.dataset_download(url, output_dir=output_dir,)
+
+#@task
 def get_remote_version(datset_url: str):    
     api = KaggleApi()
     api.authenticate()
@@ -60,7 +61,8 @@ def get_remote_version(datset_url: str):
         return None
 
     return dataset[-1].current_version_number
-    
+
+#@task
 def get_local_version(name: str) -> int:
     base_path = f"./data/{name}"
 
@@ -79,11 +81,7 @@ def get_local_version(name: str) -> int:
 
     return max_version
 
-def load_sources(path: str = "./data/sources.json") -> dict:
-    with open(path, "r") as f:
-        return json.load(f)
-
-
+#@task
 def get_latest_as_df(name_str: str):
     base_path = f"./data/{name_str}"
     if not os.path.exists(base_path):
@@ -108,7 +106,11 @@ def get_latest_as_df(name_str: str):
     
     return pd.read_csv(latest_csv_path)
 
-collect_datasets(load_sources())
+def load_sources(path: str = "./data/sources.json") -> dict:
+    with open(path, "r") as f:
+        return json.load(f)
+
+collect_datasets()
 df = get_latest_as_df("greenhouse_gas_emissions")
 print(df)
 #collect_datasets.serve(name="collect-data", cron="2 * * * *", parameters=params)
