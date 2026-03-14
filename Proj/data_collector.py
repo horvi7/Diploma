@@ -24,7 +24,7 @@ def collect_datasets():
        
         if should_download:
             print(f"Downloading {name} dataset...")
-            #download_dataset(url, name, version)
+            download_dataset(url, name, version)
         else:
             print(f"{name} dataset is up to date.")
 
