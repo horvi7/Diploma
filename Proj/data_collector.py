@@ -50,14 +50,14 @@ def download_dataset(url: str, output_dir: str, version: int):
     kagglehub.dataset_download(url, output_dir=output_dir,)
 
 #@task
-def get_remote_version(datset_url: str):    
+def get_remote_version(dataset_url: str):    
     api = KaggleApi()
     api.authenticate()
     
-    dataset = api.dataset_list(search = datset_url)
+    dataset = api.dataset_list(search = dataset_url)
 
     if(len(dataset) == 0):
-        print(f"No dataset found for {datset_url}.")
+        print(f"No dataset found for {dataset_url}.")
         return None
 
     return dataset[-1].current_version_number

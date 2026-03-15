@@ -12,11 +12,6 @@ def load_to_db(df, table_name):
         CREATE OR REPLACE TABLE {table_name} AS
         SELECT * FROM temp_df""")
 
-    print(f"Data loaded into {table_name} table in DuckDB.")
-    result = conn.execute(f"SELECT * FROM {table_name}").fetchdf()
-
-    print(result)
-
     conn.close()
 
 sources = dc.load_sources()
