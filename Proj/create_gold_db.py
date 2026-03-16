@@ -22,12 +22,24 @@ electric_vs_petrol_df = get_cleaned_data(electric_vs_petrol_name)
 greenhouse_gas_df = get_cleaned_data(greenhouse_gas_name)
 sustainability_df = get_cleaned_data(sustainability_name)
 
-co2_gold_df = pd.DataFrame()
+gold_co2_df = pd.DataFrame()
 if global_warming_df is not None:
-    co2_gold_df = global_warming_df[["population", "gdp", "energy_consumption_per_capita", "urbanization", "industrial_activity", "renewable_energy_usage"]]
+    gold_co2_df = global_warming_df[["population", "gdp", "energy_consumption_per_capita", "urbanization", "industrial_activity", "renewable_energy_usage", "fossil_fuel_usage"]]
 
-    db.load_to_db(co2_gold_df, "gold_co2_emissions")
+    db.load_to_db(gold_co2_df, "gold_co2_emissions")
 
-    result = conn.execute("SELECT * FROM gold_co2_emissions").fetchdf()
-    print("Gold CO2 Emissions Data:")
-    print(result)
+    # result = conn.execute("SELECT * FROM gold_co2_emissions").fetchdf()
+    # print("Gold CO2 Emissions Data:")
+    # print(result)
+
+gold_temperature_anomaly_df = pd.DataFrame()
+if global_warming_df is not None:
+    gold_temperature_anomaly_df = global_warming_df[["temperature_anomaly", "co2_emissions", "population", "gdp",
+                                                     "energy_consumption_per_capita", "urbanization", "industrial_activity", "renewable_energy_usage", "fossil_fuel_usage", "deforestation_rate"]]
+
+    
+    db.load_to_db(gold_temperature_anomaly_df, "gold_temperature_anomalies")
+    print("Gold Temperature Anomalies Data loaded into DuckDB:")
+    # result = conn.execute("SELECT * FROM gold_temperature_anomalies").fetchdf()
+    # print("Gold Temperature Anomalies Data:")
+    # print(result)
