@@ -1,6 +1,6 @@
 import duckdb
 import pandas as pd
-import load_to_db as db
+import db_handler as db
 
 conn = duckdb.connect("database.duckdb")
 
@@ -24,7 +24,7 @@ sustainability_df = get_cleaned_data(sustainability_name)
 
 gold_co2_df = pd.DataFrame()
 if global_warming_df is not None:
-    gold_co2_df = global_warming_df[["population", "gdp", "energy_consumption_per_capita", "urbanization", "industrial_activity", "renewable_energy_usage", "fossil_fuel_usage"]]
+    gold_co2_df = global_warming_df[["co2_emissions","population", "gdp", "energy_consumption_per_capita", "urbanization", "industrial_activity", "renewable_energy_usage", "fossil_fuel_usage"]]
 
     db.load_to_db(gold_co2_df, "gold_co2_emissions")
 

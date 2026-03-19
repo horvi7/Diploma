@@ -25,3 +25,17 @@ for name, url in sources.items():
         load_to_db(raw_df, raw_name)
     if cleaned_df is not None:
         load_to_db(cleaned_df, cleaned_name)
+
+
+def get_from_db(table_name: str) -> pd.DataFrame:
+    conn = duckdb.connect("database.duckdb")
+    try:
+        result = conn.execute(f"SELECT * FROM {table_name}").fetchdf()
+        return result
+    except Exception as e:
+        print(f"Error fetching data from {table_name}: {e}")
+        return None
+    finally:
+        conn.close()
+
+#print(get_from_db("gold_temperature_anomalies"))
