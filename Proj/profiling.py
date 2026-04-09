@@ -8,20 +8,28 @@ def generate_profile_report(df, report_name):
     # profile = ProfileReport(df, title=report_name, explorative=True)
     # profile.to_file(report_name + ".html")
 
-    year = None
-    if "Year" in df.columns or "year" in df.columns:
-        year_min = df["Year"].min() if "Year" in df.columns else df["year"].min()
-        year_max = df["Year"].max() if "Year" in df.columns else df
 
+    #lowercase dolumns in df
+    df.columns = [col.lower() for col in df.columns]
+
+    year = None
+    if "year" in df.columns:
+        year_min = df["year"].min()
+        year_max = df["year"].max()
         year = st.slider("Select Year", int(year_min), int(year_max), int(year_min))
         
-    x_columns = [col for col in df.columns if col != "Year" and col != "year"]
-    y_columns = [col for col in df.columns if col != "Year" and col != "year"]
+    x_columns = [col for col in df.columns if col != "year"]
+    y_columns = [col for col in df.columns if col != "year"]
     
     x_axis = st.selectbox("Select X-axis", x_columns)
     y_axis = st.selectbox("Select Y-axis", y_columns)
 
-    
+    if year is not None:
+        filtered_df = df[(df["year"] == year)]
+
+        fig = go.Figure(data=go.Scatter(x=filtered_df[x_axis], y=filtered_df[y_axis], mode='markers'))
+        fig.update_layout(title=f"{y_axis} vs {x_axis} for Year {year}", xaxis_title=x_axis, yaxis_title=y_axis)
+        st.plotly_chart(fig)
         
 
 
