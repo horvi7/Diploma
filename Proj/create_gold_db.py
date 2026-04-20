@@ -29,14 +29,14 @@ co2_df = get_cleaned_data(co2_name)
 #     gold_global_renewable_df = global_renewable_df[["year", "renewable_energy_consumption", "gdp", "population", "energy_consumption_per_capita"]].copy()
 
 if co2_df is not None:
-    gold_co2_df = co2_df[["co2", "gdp", "population", "year", "energy_per_capita", "energy_per_gdp", "primary_energy_consumption"]].copy()
+    gold_co2_df = co2_df[["co2", "gdp", "population", "energy_per_capita", "energy_per_gdp", "primary_energy_consumption"]].copy()
 
 
     gold_co2_df["log_population"] = np.log1p(gold_co2_df["population"])
     gold_co2_df["log_gdp"] = np.log1p(gold_co2_df["gdp"])
   
-    min_year = gold_co2_df["year"].min()
-    gold_co2_df["year"] = gold_co2_df["year"] - min_year
+    # min_year = gold_co2_df["year"].min()
+    # gold_co2_df["year"] = gold_co2_df["year"] - min_year
 
     gold_co2_df.drop(columns=["population", "gdp"], inplace=True)
 
