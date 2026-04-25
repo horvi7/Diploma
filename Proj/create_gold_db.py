@@ -5,10 +5,6 @@ import numpy as np
 
 conn = duckdb.connect("database.duckdb")
 
-electric_vs_petrol_name = "cleaned_electric_vs_petrol_cars"
-greenhouse_gas_name = "cleaned_greenhouse_gas_emissions"
-sustainability_name = "cleaned_sustainability"
-global_renewable_name = "cleaned_global_renewable"
 co2_name = "cleaned_co2"
 
 def get_cleaned_data(table_name):
@@ -19,10 +15,6 @@ def get_cleaned_data(table_name):
         print(f"Error fetching data from {table_name}: {e}")
         return None
 
-electric_vs_petrol_df = get_cleaned_data(electric_vs_petrol_name)
-greenhouse_gas_df = get_cleaned_data(greenhouse_gas_name)
-sustainability_df = get_cleaned_data(sustainability_name)
-global_renewable_df = get_cleaned_data(global_renewable_name)
 co2_df = get_cleaned_data(co2_name)
 
 # if global_renewable_df is not None:

@@ -69,20 +69,17 @@ def objective_XGB(trial, features, target):
 
 
 def get_best_params_for_models(features, target):
-    study_RFR = optuna.create_study(direction='maximize')
-    study_RFR.optimize(lambda trial: objective_RFR(trial, features, target), n_trials=50)
-    rfr_params = study_RFR.best_params
-    print("Best Random Forest Params:", rfr_params)
+    study_rfr = optuna.create_study(direction='maximize')
+    study_rfr.optimize(lambda trial: objective_RFR(trial, features, target), n_trials=50)
+    rfr_params = study_rfr.best_params
 
     study_lgbm = optuna.create_study(direction='maximize')
     study_lgbm.optimize(lambda trial: objective_LGBM(trial, features, target), n_trials=50)
     lgbm_params = study_lgbm.best_params
-    print("Best LightGBM Params:", lgbm_params)
 
     study_xgb = optuna.create_study(direction='maximize')
-    study_xgb.optimize(lambda trial: objective_XGB(trial, features, target), ntrials=50)
+    study_xgb.optimize(lambda trial: objective_XGB(trial, features, target), n_trials=50)
     xgb_params = study_xgb.best_params
-    print("Best XGBoost Params:", xgb_params)
 
     return rfr_params, lgbm_params, xgb_params
 

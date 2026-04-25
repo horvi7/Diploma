@@ -79,5 +79,5 @@ def generate_profile_report(df, report_name):
        
 
 
-df = pd.read_csv("profiling_data/climate_change_dataset.csv")
+df = pd.read_csv("profiling_data/Data.csv")
 generate_profile_report(df, "Global Warming Profile")
