@@ -37,5 +37,3 @@ def get_from_db(table_name: str) -> pd.DataFrame:
         return None
     finally:
         conn.close()
-
-#print(get_from_db("gold_temperature_anomalies"))

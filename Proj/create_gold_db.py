@@ -17,18 +17,12 @@ def get_cleaned_data(table_name):
 
 co2_df = get_cleaned_data(co2_name)
 
-# if global_renewable_df is not None:
-#     gold_global_renewable_df = global_renewable_df[["year", "renewable_energy_consumption", "gdp", "population", "energy_consumption_per_capita"]].copy()
-
 if co2_df is not None:
     gold_co2_df = co2_df[["co2", "gdp", "population", "energy_per_capita", "energy_per_gdp", "primary_energy_consumption"]].copy()
 
 
     gold_co2_df["log_population"] = np.log1p(gold_co2_df["population"])
     gold_co2_df["log_gdp"] = np.log1p(gold_co2_df["gdp"])
-  
-    # min_year = gold_co2_df["year"].min()
-    # gold_co2_df["year"] = gold_co2_df["year"] - min_year
 
     gold_co2_df.drop(columns=["population", "gdp"], inplace=True)
 
@@ -66,9 +60,4 @@ if co2_df is not None:
 #     gold_temperature_anomaly_df = global_warming_df[["temperature_anomaly", "co2_emissions", "population", "gdp",
 #                                                      "energy_consumption_per_capita", "urbanization", "industrial_activity", "renewable_energy_usage", "fossil_fuel_usage", "deforestation_rate"]]
 
-    
     db.load_to_db(gold_co2_df, "gold_co2")
-    print("CO2 Gold From DB:")
-    result = conn.execute("SELECT * FROM co2").fetchdf()
-    print("CO2 Gold Data:")
-    print(result)

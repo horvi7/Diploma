@@ -92,7 +92,6 @@ def get_best_params_for_models(features, target):
 # study.optimize(lambda trial: objective(trial, features, target), n_trials=100)
 # print(study.best_params)
 
-# best_params = {'n_estimators': 355, 'learning_rate': 0.1800619258934313, 'max_depth': 9, 'min_child_weight': 8, 'gamma': 0.036728522968999075, 'subsample': 0.663163005696679, 'colsample_bytree': 0.6109439709413452, 'reg_alpha': 0.7119153875019378, 'reg_lambda': 0.8948992469944959}
 
 # model = xgb.XGBRegressor(**best_params, random_state=32, n_jobs=-1)
 # X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=32)
