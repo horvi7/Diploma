@@ -1,3 +1,4 @@
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 import train_models_with_optuna as train_optuna
 import db_handler as db
 from sklearn.model_selection import train_test_split
@@ -36,6 +37,11 @@ def predict_and_visualize():
     xgb_predictions = xgboost_model.predict(x_test)
     print("XGBoost Predictions:", xgb_predictions)
 
+
+    rfr_mse = mean_squared_error(y_test, rfr_predictions)
+    rfr_mae = mean_absolute_error(y_test, rfr_predictions)
+    print(f"Random Forest MSE: {rfr_mse}, MAE: {rfr_mae}")
+
     plt.figure(figsize=(15, 5))
     plt.scatter(y_test, rfr_predictions, alpha=0.5)
     plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], linestyle='--') 
@@ -43,6 +49,11 @@ def predict_and_visualize():
     plt.ylabel('Predicted CO2 Emissions')
     plt.title('Random Forest Predictions')
     plt.show()
+
+
+    lgbm_mse = mean_squared_error(y_test, lgbm_predictions)
+    lgbm_mae = mean_absolute_error(y_test, lgbm_predictions)
+    print(f"LightGBM MSE: {lgbm_mse}, MAE: {lgbm_mae}")
 
     plt.figure(figsize=(15, 5))
     plt.scatter(y_test, lgbm_predictions, alpha=0.5)
@@ -52,6 +63,10 @@ def predict_and_visualize():
     plt.title('LightGBM Predictions')
     plt.show()
 
+    xgb_mse = mean_squared_error(y_test, xgb_predictions)
+    xgb_mae = mean_absolute_error(y_test, xgb_predictions)
+    print(f"XGBoost MSE: {xgb_mse}, MAE: {xgb_mae}")
+
     plt.figure(figsize=(15, 5))
     plt.scatter(y_test, xgb_predictions, alpha=0.6)
     plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], linestyle='--')
@@ -60,4 +75,11 @@ def predict_and_visualize():
     plt.title("Actual vs Predicted")
     plt.show()
 
-predict_and_visualize()
+def predict_and_visualize_time_series():
+    df = db.get_from_db("gold_co2_time_series")
+    df = df.sort_values(["name", "year"])
+    df.set_index('year', inplace=True)
+    print(df)   
+
+
+predict_and_visualize_time_series()

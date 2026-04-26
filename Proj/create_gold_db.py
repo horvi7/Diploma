@@ -20,11 +20,21 @@ co2_df = get_cleaned_data(co2_name)
 if co2_df is not None:
     gold_co2_df = co2_df[["co2", "gdp", "population", "energy_per_capita", "energy_per_gdp", "primary_energy_consumption"]].copy()
 
-
     gold_co2_df["log_population"] = np.log1p(gold_co2_df["population"])
     gold_co2_df["log_gdp"] = np.log1p(gold_co2_df["gdp"])
 
     gold_co2_df.drop(columns=["population", "gdp"], inplace=True)
+
+
+co2_time_series_df = get_cleaned_data(co2_name)
+
+if co2_time_series_df is not None:
+    gold_co2_time_series_df = co2_time_series_df[["co2", "name", "year", "gdp", "population", "energy_per_capita", "energy_per_gdp", "primary_energy_consumption"]].copy()
+
+    gold_co2_time_series_df["log_population"] = np.log1p(gold_co2_time_series_df["population"])
+    gold_co2_time_series_df["log_gdp"] = np.log1p(gold_co2_time_series_df["gdp"])
+
+    gold_co2_time_series_df.drop(columns=["population", "gdp"], inplace=True)
 
 
 
@@ -61,3 +71,4 @@ if co2_df is not None:
 #                                                      "energy_consumption_per_capita", "urbanization", "industrial_activity", "renewable_energy_usage", "fossil_fuel_usage", "deforestation_rate"]]
 
     db.load_to_db(gold_co2_df, "gold_co2")
+    db.load_to_db(gold_co2_time_series_df, "gold_co2_time_series")

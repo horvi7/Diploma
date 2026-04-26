@@ -113,4 +113,3 @@ def load_sources(path: str = "./data/sources.json") -> dict:
 collect_datasets()
 df = get_latest_as_df("greenhouse_gas_emissions")
 print(df)
-#collect_datasets.serve(name="collect-data", cron="2 * * * *", parameters=params)
