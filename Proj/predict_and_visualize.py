@@ -1,4 +1,5 @@
 from sklearn.metrics import mean_absolute_error, mean_squared_error
+from tensorflow import keras
 import train_models_with_optuna as train_optuna
 import db_handler as db
 from sklearn.model_selection import train_test_split
@@ -6,6 +7,11 @@ import xgboost as xgb
 import lightgbm as lgb
 from sklearn.ensemble import RandomForestRegressor
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras import layers, activations
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+import numpy as np
+import pandas as pd
 
 def predict_and_visualize():
     co2_df = db.get_from_db("gold_co2")
@@ -75,11 +81,68 @@ def predict_and_visualize():
     plt.title("Actual vs Predicted")
     plt.show()
 
-def predict_and_visualize_time_series():
-    df = db.get_from_db("gold_co2_time_series")
-    df = df.sort_values(["name", "year"])
-    df.set_index('year', inplace=True)
-    print(df)   
+# def predict_and_visualize_time_series():
+#     df = db.get_from_db("gold_co2_time_series")
+#     df = df.sort_values(["name", "year"])
+#     print(df)   
 
+#     train_df = df[df["year"] <= 1990].copy()
+#     valid_df = df[(df["year"] > 1990) & (df["year"] <= 2005)].copy()
+#     test_df = df[df["year"] > 2005].copy()
 
-predict_and_visualize_time_series()
+#     #majd split
+
+#     model = keras.Sequential(
+#         [
+#             layers.LSTM(16, activation="relu", input_shape = train_X.shape[1:]),
+#             layers.Dense(1),
+#         ]
+#     )
+
+#     model.compile(loss='MeanSquaredError', optimizer='Adam')
+#     callbacks = [EarlyStopping(monitor="val_loss", patience=10)]
+#     history = model.fit(
+#             train_X,
+#             train_y,
+#             validation_data=(valid_X, valid_y),
+#             batch_size=16,
+#             epochs=100,
+#             callbacks=callbacks,
+#             shuffle=True,
+#             verbose=True,
+#         )
+
+#     pred = model.predict(test_X)
+#     plt.figure(figsize=(10, 6))
+#     plt.plot(test_df["co2"], label="Real", color='blue')
+#     plt.plot(pd.DataFrame(index=test_df.index[lookback:], data=pred), label="Predicted", color='red')
+#     plt.xticks(rotation=45)
+#     plt.title('Actual vs Predicted CO2 Emissions')
+#     plt.xlabel('Year')
+#     plt.ylabel('CO2 Emissions')
+#     plt.legend()
+#     plt.show()
+
+  
+
+# def process_Xy(df, target_col="co2", lookback=10):
+#     X, y = [], []
+
+#     df = df.sort_values(["name", "year"]).reset_index(drop=True)
+
+#     feature_cols = df.select_dtypes(include=["number"]).columns.tolist()
+#     feature_cols = [col for col in feature_cols if col != target_col]
+
+#     for _, group in df.groupby("name"):
+#         group = group.sort_values("year").reset_index(drop=True)
+
+#         X_values = group[feature_cols].values
+#         y_values = group[target_col].values
+
+#         for i in range(lookback, len(group)):
+#             X.append(X_values[i - lookback:i])
+#             y.append(y_values[i])
+
+#     return pd.DataFrame(X), pd.Series(y)
+
+predict_and_visualize()
