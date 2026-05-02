@@ -1,5 +1,5 @@
 from sklearn.metrics import mean_absolute_error, mean_squared_error
-from tensorflow import keras
+from tensorflow import keras, reshape
 import train_models_with_optuna as train_optuna
 import db_handler as db
 from sklearn.model_selection import train_test_split
@@ -81,68 +81,118 @@ def predict_and_visualize():
     plt.title("Actual vs Predicted")
     plt.show()
 
-# def predict_and_visualize_time_series():
-#     df = db.get_from_db("gold_co2_time_series")
-#     df = df.sort_values(["name", "year"])
-#     print(df)   
+def predict_and_visualize_time_series():
+    df = db.get_from_db("gold_co2_time_series")
 
-#     train_df = df[df["year"] <= 1990].copy()
-#     valid_df = df[(df["year"] > 1990) & (df["year"] <= 2005)].copy()
-#     test_df = df[df["year"] > 2005].copy()
+    x, y, target_years, target_countries = process_Xy(df)
+   
+    train_x = x[target_years <= 2005]
+    train_y = y[target_years <= 2005]
+    valid_x = x[(target_years > 2005) & (target_years <= 2014)]
+    valid_y = y[(target_years > 2005) & (target_years <= 2014)]
+    test_x = x[target_years > 2014]
+    test_y = y[target_years > 2014]
 
-#     #majd split
+    scaler_x = StandardScaler()
+    scaler_y = StandardScaler()
 
-#     model = keras.Sequential(
-#         [
-#             layers.LSTM(16, activation="relu", input_shape = train_X.shape[1:]),
-#             layers.Dense(1),
-#         ]
-#     )
+    n_features = train_x.shape[2]
 
-#     model.compile(loss='MeanSquaredError', optimizer='Adam')
-#     callbacks = [EarlyStopping(monitor="val_loss", patience=10)]
-#     history = model.fit(
-#             train_X,
-#             train_y,
-#             validation_data=(valid_X, valid_y),
-#             batch_size=16,
-#             epochs=100,
-#             callbacks=callbacks,
-#             shuffle=True,
-#             verbose=True,
-#         )
+    train_x_2d = train_x.reshape(-1, n_features)
+    valid_x_2d = valid_x.reshape(-1, n_features)
+    test_x_2d = test_x.reshape(-1, n_features)
 
-#     pred = model.predict(test_X)
-#     plt.figure(figsize=(10, 6))
-#     plt.plot(test_df["co2"], label="Real", color='blue')
-#     plt.plot(pd.DataFrame(index=test_df.index[lookback:], data=pred), label="Predicted", color='red')
-#     plt.xticks(rotation=45)
-#     plt.title('Actual vs Predicted CO2 Emissions')
-#     plt.xlabel('Year')
-#     plt.ylabel('CO2 Emissions')
-#     plt.legend()
-#     plt.show()
+    scaled_train = scaler_x.fit_transform(train_x_2d).reshape(train_x.shape)
+    scaled_valid = scaler_x.transform(valid_x_2d).reshape(valid_x.shape)
+    scaled_test = scaler_x.transform(test_x_2d).reshape(test_x.shape)
+
+    target_train = scaler_y.fit_transform(train_y.reshape(-1, 1))
+    target_valid = scaler_y.transform(valid_y.reshape(-1, 1))
+    target_test = scaler_y.transform(test_y.reshape(-1, 1))
+
+    model = keras.Sequential(
+        [
+            layers.Input(shape=train_x.shape[1:]),
+            layers.GRU(16, activation="relu", input_shape = train_x.shape[1:]),
+            layers.Dense(16),
+            layers.Dense(8),
+            layers.Dense(4),
+            layers.Dense(1)
+        ]
+    )
+
+    model.compile(loss='MeanSquaredError', optimizer='Adam')
+    callbacks = [EarlyStopping(monitor="val_loss", patience=10, restore_best_weights=True)]
+    history = model.fit(
+            scaled_train,
+            target_train,
+            validation_data=(scaled_valid, target_valid),
+            batch_size=16,
+            epochs=100,
+            callbacks=callbacks,
+            shuffle=True,
+            verbose=True,
+        )
+
+
+    test_mask = target_years > 2014
+
+    test_years = target_years[test_mask]
+    test_countries = target_countries[test_mask]
+
+    country_mask = test_countries == "United States"
+
+    pred_scaled = model.predict(scaled_test)
+    pred = scaler_y.inverse_transform(pred_scaled).flatten()
+    plt.figure(figsize=(10, 6))
+    plt.plot(test_years[country_mask], test_y[country_mask], label="Real")
+    plt.plot(test_years[country_mask], pred[country_mask], label="Predicted")
+    plt.xticks(rotation=45)
+    plt.title('Actual vs Predicted CO2 Emissions')
+    plt.xlabel('Year')
+    plt.ylabel('CO2 Emissions')
+    plt.legend()
+    plt.show()
 
   
 
-# def process_Xy(df, target_col="co2", lookback=10):
-#     X, y = [], []
+def process_Xy(df, lookback=10):
+    df = df.copy()
+    df = df.sort_values(["name", "year"]).reset_index(drop=True)
 
-#     df = df.sort_values(["name", "year"]).reset_index(drop=True)
+    features = [
+        "log_gdp",
+        "log_population",
+        "energy_per_capita",
+        "energy_per_gdp",
+        "primary_energy_consumption",
+        "co2"
+    ]
 
-#     feature_cols = df.select_dtypes(include=["number"]).columns.tolist()
-#     feature_cols = [col for col in feature_cols if col != target_col]
+    x, y, target_years, target_countries = [], [], [], []
 
-#     for _, group in df.groupby("name"):
-#         group = group.sort_values("year").reset_index(drop=True)
+    for country, group in df.groupby("name"):
+        group = group.sort_values("year")
 
-#         X_values = group[feature_cols].values
-#         y_values = group[target_col].values
+        if len(group) <= lookback:
+            continue
 
-#         for i in range(lookback, len(group)):
-#             X.append(X_values[i - lookback:i])
-#             y.append(y_values[i])
+        x_values = group[features].values.astype(np.float32)
+        y_values = group["co2"].values.astype(np.float32)
+        years = group["year"].values
 
-#     return pd.DataFrame(X), pd.Series(y)
+        for i in range(lookback, len(group)):
+            x.append(x_values[i - lookback:i])
+            y.append(y_values[i])
+            target_years.append(years[i])
+            target_countries.append(country)
 
-predict_and_visualize()
+    x = np.array(x, dtype=np.float32)
+    y = np.array(y, dtype=np.float32)
+    target_years = np.array(target_years)
+    target_countries = np.array(target_countries)
+
+    return x, y, target_years, target_countries
+
+
+predict_and_visualize_time_series()

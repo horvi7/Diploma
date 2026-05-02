@@ -30,8 +30,7 @@ def generate_profile_report(df, report_name):
         fig = go.Figure(data=go.Heatmap(z=corr_matrix.values, x=corr_matrix.columns, y=corr_matrix.columns, colorscale='Viridis'))
         fig.update_layout(title="Correlation Matrix", xaxis_title="Features", yaxis_title="Features")
         st.plotly_chart(fig)
-    
-
+        
 
     #Line Chart with slider
     if "year" in df.columns:
