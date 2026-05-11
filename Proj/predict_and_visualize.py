@@ -90,8 +90,8 @@ def predict_and_visualize_time_series():
     train_y = y[target_years <= 2005]
     valid_x = x[(target_years > 2005) & (target_years <= 2014)]
     valid_y = y[(target_years > 2005) & (target_years <= 2014)]
-    test_x = x[target_years > 2014]
-    test_y = y[target_years > 2014]
+    test_x = x[target_years > 2000]
+    test_y = y[target_years > 2000]
 
     scaler_x = StandardScaler()
     scaler_y = StandardScaler()
@@ -135,7 +135,7 @@ def predict_and_visualize_time_series():
         )
 
 
-    test_mask = target_years > 2014
+    test_mask = target_years > 2000
 
     test_years = target_years[test_mask]
     test_countries = target_countries[test_mask]

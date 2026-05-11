@@ -111,5 +111,3 @@ def load_sources(path: str = "./data/sources.json") -> dict:
         return json.load(f)
 
 collect_datasets()
-df = get_latest_as_df("greenhouse_gas_emissions")
-print(df)
