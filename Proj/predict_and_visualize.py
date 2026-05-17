@@ -90,8 +90,8 @@ def predict_and_visualize_time_series():
     train_y = y[target_years <= 2005]
     valid_x = x[(target_years > 2005) & (target_years <= 2014)]
     valid_y = y[(target_years > 2005) & (target_years <= 2014)]
-    test_x = x[target_years > 2000]
-    test_y = y[target_years > 2000]
+    test_x = x[target_years > 2014]
+    test_y = y[target_years > 2014]
 
     scaler_x = StandardScaler()
     scaler_y = StandardScaler()
@@ -113,7 +113,7 @@ def predict_and_visualize_time_series():
     model = keras.Sequential(
         [
             layers.Input(shape=train_x.shape[1:]),
-            layers.GRU(16, activation="relu", input_shape = train_x.shape[1:]),
+            layers.GRU(32, activation="relu", input_shape = train_x.shape[1:]),
             layers.Dense(16),
             layers.Dense(8),
             layers.Dense(4),
@@ -121,7 +121,10 @@ def predict_and_visualize_time_series():
         ]
     )
 
-    model.compile(loss='MeanSquaredError', optimizer='Adam')
+    model.compile(
+    loss="MeanSquaredError",
+    optimizer=keras.optimizers.Adam(learning_rate=0.001)
+)
     callbacks = [EarlyStopping(monitor="val_loss", patience=10, restore_best_weights=True)]
     history = model.fit(
             scaled_train,
@@ -135,7 +138,7 @@ def predict_and_visualize_time_series():
         )
 
 
-    test_mask = target_years > 2000
+    test_mask = target_years > 2014
 
     test_years = target_years[test_mask]
     test_countries = target_countries[test_mask]
@@ -165,8 +168,7 @@ def process_Xy(df, lookback=10):
         "log_population",
         "energy_per_capita",
         "energy_per_gdp",
-        "primary_energy_consumption",
-        "co2"
+        "primary_energy_consumption"
     ]
 
     x, y, target_years, target_countries = [], [], [], []

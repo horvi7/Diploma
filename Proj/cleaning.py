@@ -20,8 +20,6 @@ def clean_data(df: pd.DataFrame):
     
     return df
 
-
-
 def validate_data(df: pd.DataFrame):
 
     numeric = [
