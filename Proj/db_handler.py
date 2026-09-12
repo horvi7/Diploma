@@ -7,9 +7,7 @@ DB_PATH = "database.duckdb"
 
 def load_to_db(df: pd.DataFrame, table_name: str) -> None:
     if not table_name.isidentifier():
-        raise ValueError(
-            f"Érvénytelen táblanév: '{table_name}'. "f"Csak betűket, számokat és aláhúzást tartalmazhat, és nem kezdődhet számmal."
-        )
+        raise ValueError(f"Érvénytelen táblanév: '{table_name}'. "f"Csak betűket, számokat és aláhúzást tartalmazhat, és nem kezdődhet számmal.")
 
     try:
         with duckdb.connect(DB_PATH) as conn:
@@ -41,7 +39,6 @@ for name, url in sources.items():
         load_to_db(raw_df, raw_name)
     if cleaned_df is not None:
         load_to_db(cleaned_df, cleaned_name)
-
 
 
 
