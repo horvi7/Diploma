@@ -197,4 +197,5 @@ def process_Xy(df, lookback=10):
     return x, y, target_years, target_countries
 
 
-predict_and_visualize_time_series()
+predict_and_visualize()
+#predict_and_visualize_time_series()

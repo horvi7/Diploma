@@ -19,9 +19,11 @@ co2_df = get_cleaned_data(co2_name)
 
 if co2_df is not None:
     gold_co2_df = co2_df[["co2", "gdp", "population", "energy_per_capita", "energy_per_gdp", "primary_energy_consumption"]].copy()
-
+    gold_co2_df["log_energy_per_gdp"] = np.log1p(gold_co2_df["energy_per_gdp"])
+    gold_co2_df["log_co2_per_energy"] = np.log1p(gold_co2_df["co2"] / gold_co2_df["energy_per_capita"])
     gold_co2_df["log_population"] = np.log1p(gold_co2_df["population"])
     gold_co2_df["log_gdp"] = np.log1p(gold_co2_df["gdp"])
+    gold_co2_df["log_gdp_per_population"] = np.log1p(gold_co2_df["gdp"] / gold_co2_df["population"])
 
     gold_co2_df.drop(columns=["population", "gdp"], inplace=True)
 
