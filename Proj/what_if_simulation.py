@@ -56,7 +56,7 @@ def predict_and_visualize():
 
     # 1. HELYES 10%-os növelés a log-térben: ln(1.1)-et ADUNK HOZZÁ
     changed_test_data = test_data.copy()
-    changed_test_data["log_population"] = changed_test_data["log_population"] + np.log(1.5)
+    changed_test_data["log_population"] = changed_test_data["log_population"] + np.log(0.9)
 
     # 2. Kaya-identitás logaritmikus alakban (ÖSSZEADÁS)
     row = test_data.iloc[0]
