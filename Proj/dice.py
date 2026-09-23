@@ -46,4 +46,25 @@ def analyze_decision():
 
   exp = dice_ml.Dice(dice_dataset_kaya, dice_model)
 
+  custom_feature = pd.DataFrame([{
+      "log_population": 16.656126,
+      "log_gdp_per_population": 10.207357,
+      "log_energy_per_gdp": 2.265,
+      "log_co2_per_energy": 0.004512,
+  }])
+
+  prediction = model.predict(custom_feature)
+  print(f"Prediction for custom feature: {prediction}")
+
+  decrease_range_low = 0.8
+  decrease_range_high = 0.9
+
+  cf = exp.generate_counterfactuals(custom_feature, total_CFs=1, desired_range=[prediction[0]*decrease_range_low , prediction[0]*decrease_range_high], features_to_vary=features_kaya.columns.tolist())
+
+  # A generált forgatókönyv kinyerése DataFrame-ként
+  cf_df = cf.cf_examples_list[0].final_cfs_df
+
+  print("\n--- Generált ellenirányú forgatókönyv (Counterfactual) ---")
+  print(cf_df)
+
 analyze_decision()
