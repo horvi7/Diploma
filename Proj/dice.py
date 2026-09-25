@@ -61,7 +61,6 @@ def analyze_decision():
 
   cf = exp.generate_counterfactuals(custom_feature, total_CFs=1, desired_range=[prediction[0]*decrease_range_low , prediction[0]*decrease_range_high], features_to_vary=features_kaya.columns.tolist())
 
-  # A generált forgatókönyv kinyerése DataFrame-ként
   cf_df = cf.cf_examples_list[0].final_cfs_df
 
   print("\n--- Generált ellenirányú forgatókönyv (Counterfactual) ---")
