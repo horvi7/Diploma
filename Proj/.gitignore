@@ -178,4 +178,20 @@ pyrightconfig.json
 *.duckdb
 *.pyc
 Lib/
+# Virtuális környezet és IDE mappák
+.vscode/
+Include/
+Scripts/
+Lib/
+etc/
+share/
+images/
+.lock
+.prefectignore
+
+# Adatbázisok és ideiglenes fájlok
+*.duckdb
+*.duckdb.wal
+__pycache__/
+*.pyc
 # End of https://www.toptal.com/developers/gitignore/api/python
