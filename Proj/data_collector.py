@@ -4,10 +4,10 @@ import os
 
 import kagglehub
 import pandas as pd
-from kaggle.api.kaggle_api_extended import KaggleApi
 
 os.environ["KAGGLE_USERNAME"] = "horvthdmmrton"
 os.environ["KAGGLE_KEY"] = "KGAT_2e7fe800a42750e3587f81735f08628b"
+from kaggle.api.kaggle_api_extended import KaggleApi
 
 def collect_datasets():
     sources = load_sources()

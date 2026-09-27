@@ -1,19 +1,21 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import shap
 from keras.callbacks import EarlyStopping
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from tensorflow import keras
 from tensorflow.keras import layers
-
+from lime.lime_tabular import RecurrentTabularExplainer
 import db_handler as db
 import trained_models as tm
 
 
 def predict_and_visualize():
     co2_df = db.get_from_db("gold_co2")
-
+    print("Df: ", co2_df.head())
+    return
     target = co2_df.iloc[:, 0]
     features = co2_df.iloc[:, 1:]
 
@@ -69,11 +71,12 @@ def predict_and_visualize():
     plt.title("Actual vs Predicted")
     plt.show()
 
+
 def predict_and_visualize_time_series():
     df = db.get_from_db("gold_co2_time_series")
-
+    print("Df: ", df.head())
     x, y, target_years, target_countries = process_Xy(df)
-   
+    print("df cols: ", df.columns.tolist())
     train_x = x[target_years <= 2005]
     train_y = y[target_years <= 2005]
     valid_x = x[(target_years > 2005) & (target_years <= 2014)]
@@ -145,7 +148,80 @@ def predict_and_visualize_time_series():
     plt.legend()
     plt.show()
 
-  
+
+    #LIME magyarázat
+    features = ['energy_per_capita', 'energy_per_gdp', 'primary_energy_consumption', 'log_population', 'log_gdp']
+
+    explainer = RecurrentTabularExplainer(
+        training_data=scaled_train,
+        feature_names=features,
+        mode='regression',
+        training_labels=target_train.flatten(),
+        random_state=42,
+        discretize_continuous=True #Enélkül is próba
+    )
+
+    year_to_explain = 2018
+    country_to_explain = "Hungary"
+    row = np.where((test_years == year_to_explain) & (test_countries == country_to_explain))[0][0]
+    explanation = explainer.explain_instance(
+    scaled_test[row],
+    lambda samples: scaler_y.inverse_transform(
+        model.predict(samples, verbose=0)
+    ).flatten(),
+    num_features=30, #Mennyi magyarázatot ad ki lokálisan a minta körül.
+    num_samples=1000)
+
+    fig = explanation.as_pyplot_figure()
+    plt.tight_layout()
+    plt.show()
+
+    # SHAP magyarázat
+
+    # 1. Background adatok
+    background = scaled_train[
+        np.random.default_rng(42).choice(
+            len(scaled_train),
+            size=min(100, len(scaled_train)),
+            replace=False
+        )
+    ]
+
+    # 2. SHAP explainer
+    explainer = shap.GradientExplainer(model, background) #Íráshoz: link hogy miért ez.
+
+    # 3. Kiválasztott megfigyelés magyarázata
+    shap_values = explainer.shap_values(scaled_test[row:row+1])
+
+    shap_values = np.array(shap_values).squeeze()
+
+    # 4. Feature-nevek időlépésekkel
+    n_timesteps = scaled_test.shape[1]
+    #Csak h mit írjon ki a magyarázatban
+    feature_names = [
+        f"{feature}_t-{n_timesteps - 1 - timestep}"
+        for timestep in range(n_timesteps)
+        for feature in features
+    ]
+
+    # 5. SHAP értékek visszaskálázása eredeti CO2-skálára
+    shap_values = shap_values.flatten() * scaler_y.scale_[0]
+
+    base_value = (
+        model.predict(background, verbose=0).mean()
+        * scaler_y.scale_[0]
+        + scaler_y.mean_[0]
+    )
+
+    # 6. Ábra
+    explanation = shap.Explanation(
+        values=shap_values,
+        base_values=base_value,
+        data=scaled_test[row].flatten(),
+        feature_names=feature_names
+    )
+
+    shap.plots.waterfall(explanation, max_display=20)
 
 def process_Xy(df, lookback=10):
     df = df.copy()
