@@ -1,8 +1,8 @@
 import pandas as pd
-from ydata_profiling import ProfileReport
 import plotly.graph_objects as go
-import numpy as np
 import streamlit as st
+from ydata_profiling import ProfileReport
+
 
 def generate_profile_report(df, report_name):
     #YData Profiling
@@ -36,7 +36,7 @@ def generate_profile_report(df, report_name):
     if "year" in df.columns:
         year_min = int(df["year"].min())
         year_max = int(df["year"].max())
-        #slider from min to max
+        #Slider from min to max
         year = st.slider("Select Year", year_min, year_max)
         df = df[df["year"] == year]
     df_numeric = df.select_dtypes(include=['number'])

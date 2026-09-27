@@ -1,12 +1,9 @@
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, root_mean_squared_error
-from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.metrics import r2_score
-import pandas as pd
-import db_handler as db
-import xgboost as xgb
 import lightgbm as lgb
 import optuna
+import xgboost as xgb
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import cross_val_score
+
 
 def objective_RFR(trial, features, target):
   n_estimators = trial.suggest_int('n_estimators', 50, 200)
@@ -81,35 +78,8 @@ def get_best_params_for_models(features, target):
     study_xgb.optimize(lambda trial: objective_XGB(trial, features, target), n_trials=50)
     xgb_params = study_xgb.best_params
 
+    #Trained models-ben elmentve, ne legyen mindig újraszámolva.
     return rfr_params, lgbm_params, xgb_params
 
-# co2_df = db.get_from_db("gold_co2")
-# print("Itt: ", co2_df)
-# target = co2_df.iloc[:, 0]
-# features = co2_df.iloc[:, 1:]
-
-# study = optuna.create_study(direction='maximize')
-# study.optimize(lambda trial: objective(trial, features, target), n_trials=100)
-# print(study.best_params)
-
-
-# model = xgb.XGBRegressor(**best_params, random_state=32, n_jobs=-1)
-# X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=32)
-# model.fit(X_train, y_train)
-# y_pred = model.predict(X_test)
-# r2 = r2_score(y_test, y_pred)
-# rmse = root_mean_squared_error(y_test, y_pred)
-# mae = mean_absolute_error(y_test, y_pred)
-
-# print("R2:", r2)
-# print("RMSE:", rmse)
-# print("MAE:", mae)
-
-# importances = model.feature_importances_
-# feature_importance_df = pd.DataFrame({
-#     "feature": features.columns,
-#     "importance": importances
-# }).sort_values(by="importance", ascending=False)
-# print("importance: ", model.get_booster().get_score(importance_type="gain"))
 
 

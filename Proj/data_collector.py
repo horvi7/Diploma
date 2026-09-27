@@ -1,21 +1,14 @@
-#How to start the flow:
-#prefect profile create local   -> következő beállításokat elmenti
-#export prefect api. Alapbol cloudban akart futni de mi localban akartuk futtatni, igy ezt kellett beallitani
-#prefect config set PREFECT_API_URL="http://127.0.0.1:4200/api"
-#ez jön vissza: updated profile local
-#prefect server start (ez most már a lokal lesz)
-
-from prefect import flow, task
-import kagglehub
-import os
-import pandas as pd
+#Prefect el eltt hagyva
 import json
+import os
+
+import kagglehub
+import pandas as pd
+from kaggle.api.kaggle_api_extended import KaggleApi
 
 os.environ["KAGGLE_USERNAME"] = "horvthdmmrton"
 os.environ["KAGGLE_KEY"] = "KGAT_2e7fe800a42750e3587f81735f08628b"
-from kaggle.api.kaggle_api_extended import KaggleApi
 
-#@flow
 def collect_datasets():
     sources = load_sources()
     for name, url in sources.items():
@@ -28,7 +21,6 @@ def collect_datasets():
         else:
             print(f"{name} dataset is up to date.")
 
-#@task
 def should_download_dataset(name: str, url: str) -> bool:
     local_version = get_local_version(name)
     remote_version = get_remote_version(url)
@@ -41,7 +33,6 @@ def should_download_dataset(name: str, url: str) -> bool:
 
     return False, None
 
-#@task
 def download_dataset(url: str, output_dir: str, version: int):
     output_dir = f"./data/{output_dir}/{output_dir}_v{version}"
     if not os.path.exists(output_dir):
@@ -49,7 +40,6 @@ def download_dataset(url: str, output_dir: str, version: int):
 
     kagglehub.dataset_download(url, output_dir=output_dir,)
 
-#@task
 def get_remote_version(dataset_url: str):    
     api = KaggleApi()
     api.authenticate()
@@ -62,7 +52,6 @@ def get_remote_version(dataset_url: str):
 
     return dataset[-1].current_version_number
 
-#@task
 def get_local_version(name: str) -> int:
     base_path = f"./data/{name}"
 
@@ -81,7 +70,6 @@ def get_local_version(name: str) -> int:
 
     return max_version
 
-#@task
 def get_latest_as_df(name_str: str):
     base_path = f"./data/{name_str}"
     if not os.path.exists(base_path):

@@ -1,10 +1,12 @@
+import lightgbm as lgb
+import pandas as pd
+import xgboost as xgb
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-import pandas as pd
-import db_handler as db
-import xgboost as xgb
-import lightgbm as lgb
 
+import db_handler as db
+
+#Ez nem nagyon van használva, mert ez csak az eredeti manuális próbálkozás, de aztán optuna be lett vezetve, majd a paraméterek elmentve
 def train_random_forest(features, target):
   feature_train, feature_test, target_train, target_test = train_test_split(features, target, test_size=0.2, random_state=32)
 

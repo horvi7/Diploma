@@ -1,8 +1,9 @@
-import db_handler as db
-import xgboost as xgb
 import lightgbm as lgb
-import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor
+import xgboost as xgb
 from sklearn.model_selection import train_test_split
+
+import db_handler as db
 
 rfr_params = {'n_estimators': 105, 'max_depth': 6, 'min_samples_split': 9, 'min_samples_leaf': 4, 'bootstrap': True, 'max_leaf_nodes': 24}
 lgbm_params = {'n_estimators': 167, 'learning_rate': 0.011882888130545924, 'max_depth': 4, 'min_child_samples': 23, 'subsample': 0.9390586696763323, 'colsample_bytree': 0.6506930125803669, 'reg_alpha': 0.9821512272350051, 'reg_lambda': 0.11827601292607956}
@@ -26,7 +27,7 @@ def get_model(model_type):
         "log_co2_per_energy",
     ]]
 
-    x_train, x_test, y_train, y_test = train_test_split(
+    x_train, _, y_train, _ = train_test_split(
         features, target, test_size=0.2, random_state=32
     )
 

@@ -1,24 +1,13 @@
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-from tensorflow import keras, reshape
-import train_models_with_optuna as train_optuna
-import db_handler as db
-from sklearn.model_selection import train_test_split
-import xgboost as xgb
-import lightgbm as lgb
-from sklearn.ensemble import RandomForestRegressor
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
-from tensorflow.keras import layers, activations
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-import numpy as np
-import pandas as pd
 import dice_ml
+
+import db_handler as db
+import trained_models as tm
+
 
 def analyze_decision():
   df = db.get_from_db("gold_co2")
   print(df.head())
 
-  target = df["co2"]
   features_kaya = df[[
       "log_population",
       "log_gdp_per_population",
@@ -34,24 +23,19 @@ def analyze_decision():
   ]]
 
   features_all = df.drop(columns=["co2"])
+  print("Features_all: ", features_all.columns.tolist())
 
   dice_dataset_kaya = dice_ml.Data(dataframe=df_kaya, continuous_features=features_kaya.columns.tolist(), outcome_name="co2")
 
   dice_dataset_all = dice_ml.Data(dataframe=df, continuous_features=features_all.columns.tolist(), outcome_name="co2")
 
-  model = RandomForestRegressor(n_estimators=105, max_depth=6, min_samples_split=9, min_samples_leaf=4, bootstrap=True, max_leaf_nodes=24, random_state=32)
-  model.fit(features_kaya, target)
+  model = tm.get_model('RandomForest')
 
   dice_model = dice_ml.Model(model=model, backend="sklearn",model_type="regressor")
 
   exp = dice_ml.Dice(dice_dataset_kaya, dice_model)
 
-  custom_feature = pd.DataFrame([{
-      "log_population": 16.656126,
-      "log_gdp_per_population": 10.207357,
-      "log_energy_per_gdp": 2.265,
-      "log_co2_per_energy": 0.004512,
-  }])
+  custom_feature = features_kaya.iloc[[0]]
 
   prediction = model.predict(custom_feature)
   print(f"Prediction for custom feature: {prediction}")
@@ -63,7 +47,14 @@ def analyze_decision():
 
   cf_df = cf.cf_examples_list[0].final_cfs_df
 
-  print("\n--- Generált ellenirányú forgatókönyv (Counterfactual) ---")
+  print("\nGenerált Counterfactual: ")
   print(cf_df)
+
+  print("Összes feature-el: ")
+  exp = dice_ml.Dice(dice_dataset_all, dice_model)
+  custom_feature = features_all.iloc[[0]]
+  cf_all = exp.generate_counterfactuals(custom_feature, total_CFs=1, desired_range=[prediction[0]*decrease_range_low , prediction[0]*decrease_range_high], features_to_vary=features_all.columns.tolist())
+  cf_all_df = cf_all.cf_examples_list[0].final_cfs_df
+  print(cf_all_df)
 
 analyze_decision()

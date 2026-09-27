@@ -1,6 +1,6 @@
-import data_collector as dc
-import pandas as pd
 import great_expectations as gx
+import pandas as pd
+
 
 def clean_data(df: pd.DataFrame):
     df = df.copy()
@@ -50,7 +50,7 @@ def validate_data(df: pd.DataFrame):
 
     expectations.append(gx.expectations.ExpectCompoundColumnsToBeUnique(column_list=["name", "year"]))
 
-    batch = batch_definition.get_batch(batch_parameters=batch_parameters)
+    batch_definition.get_batch(batch_parameters=batch_parameters)
     
     suite = gx.ExpectationSuite(name="co2_validation_suite", expectations=expectations)
 
@@ -71,8 +71,6 @@ def validate_data(df: pd.DataFrame):
 
     context.checkpoints.add_or_update(checkpoint)
 
-    results = checkpoint.run(
-        batch_parameters={"dataframe": df}
-    )
+    checkpoint.run(batch_parameters={"dataframe": df})
 
     context.open_data_docs()
