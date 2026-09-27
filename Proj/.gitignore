@@ -176,4 +176,6 @@ pyrightconfig.json
 
 *.exe
 *.duckdb
+*.pyc
+Proj/Lib/
 # End of https://www.toptal.com/developers/gitignore/api/python
