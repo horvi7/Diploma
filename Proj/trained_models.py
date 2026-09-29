@@ -11,21 +11,26 @@ xgb_params = {'n_estimators': 381, 'learning_rate': 0.11854834150995305, 'max_de
 
 def get_model(model_type):
     co2_df = db.get_from_db("gold_co2")
-    co2_df = co2_df[[
-        "co2",
-        "log_population",
-        "log_gdp_per_population",
-        "log_energy_per_gdp",
-        "log_co2_per_energy",
-    ]]
+    print(co2_df.head())
+    #Ez Kaya
+    # co2_df = co2_df[[
+    #     "co2",
+    #     "log_population",
+    #     "log_gdp_per_population",
+    #     "log_energy_per_gdp",
+    #     "log_co2_per_energy",
+    # ]]
 
+    # target = co2_df["co2"]
+    # features = co2_df[[
+    #     "log_population",
+    #     "log_gdp_per_population",
+    #     "log_energy_per_gdp",
+    #     "log_co2_per_energy",
+    # ]]
+    #Sima
     target = co2_df["co2"]
-    features = co2_df[[
-        "log_population",
-        "log_gdp_per_population",
-        "log_energy_per_gdp",
-        "log_co2_per_energy",
-    ]]
+    features = co2_df.drop(columns="co2")
 
     x_train, _, y_train, _ = train_test_split(
         features, target, test_size=0.2, random_state=32
@@ -42,3 +47,4 @@ def get_model(model_type):
 
     model.fit(x_train, y_train)
     return model
+
