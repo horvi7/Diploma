@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.tree import DecisionTreeRegressor, plot_tree
 import shap
 from keras.callbacks import EarlyStopping
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from tensorflow import keras
@@ -261,5 +262,43 @@ def process_Xy(df, lookback=10):
     return x, y, target_years, target_countries
 
 
-predict_and_visualize()
+def print_surrogate_tree():
+    model = tm.get_model('XGBoost')
+    co2_df = db.get_from_db("gold_co2")
+
+    target = co2_df.iloc[:, 0]
+    features = co2_df.iloc[:, 1:]
+
+    x_train, x_test, _, _ = train_test_split(features, target, test_size=0.2, random_state=32)
+
+    y_train_for_surrogate = model.predict(x_train)
+    y_test_for_surrogate = model.predict(x_test)
+
+    surrogate_model = DecisionTreeRegressor(max_depth=3, random_state=32)
+
+
+    surrogate_model.fit(x_train, y_train_for_surrogate)
+
+    y_test_surrogate_pred = surrogate_model.predict(x_test)
+
+    fidelity = r2_score(y_test_for_surrogate, y_test_surrogate_pred)
+
+    print(f"Fidelity of surrogate model: {fidelity:.4f}")
+
+
+    plt.figure(figsize=(20, 10))
+
+    plot_tree(
+        surrogate_model,
+        feature_names=features.columns,
+        filled=True,
+        rounded=True,
+        fontsize=8
+    )
+
+    plt.title("Surrogate Decision Tree")
+    plt.show()
+
+print_surrogate_tree()
+#predict_and_visualize()
 #predict_and_visualize_time_series()
