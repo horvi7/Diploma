@@ -17,6 +17,7 @@ def train_random_forest(features, target):
   result_df = pd.DataFrame({"Actual": target_test, "Predicted": target_predicted})
   print(result_df)
   print("Score:", regressor.score(feature_test, target_test))
+  return regressor.score(feature_test, target_test)
 
 
 def train_xgboost(features, target):
@@ -29,6 +30,7 @@ def train_xgboost(features, target):
   result_df = pd.DataFrame({"Actual": target_test, "Predicted": target_predicted})
   print(result_df)
   print("Score:", regressor.score(feature_test, target_test))
+  return regressor.score(feature_test, target_test)
 
 def train_lightgbm(features, target):
   feature_train, feature_test, target_train, target_test = train_test_split(features, target, test_size=0.2, random_state=32)
@@ -40,11 +42,22 @@ def train_lightgbm(features, target):
   result_df = pd.DataFrame({"Actual": target_test, "Predicted": target_predicted})
   print(result_df)
   print("Score:", regressor.score(feature_test, target_test))
+  return regressor.score(feature_test, target_test)
 
-co2_df = db.get_from_db("gold_co2_emissions")
-target = co2_df.iloc[:, 0]
-features = co2_df.iloc[:, 1:]
+def train_legacy_models():
+  co2_df = db.get_from_db("gold_co2")
+  if co2_df is None:
+    return {}
 
-train_random_forest(features, target)
-train_xgboost(features, target)
-train_lightgbm(features, target)
+  target = co2_df.iloc[:, 0]
+  features = co2_df.iloc[:, 1:]
+
+  return {
+    "RandomForest": train_random_forest(features, target),
+    "XGBoost": train_xgboost(features, target),
+    "LightGBM": train_lightgbm(features, target),
+  }
+
+
+if __name__ == "__main__":
+  train_legacy_models()

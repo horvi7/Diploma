@@ -1,13 +1,12 @@
 #Prefect el eltt hagyva
 import json
 import os
-
 import kagglehub
 import pandas as pd
-
-os.environ["KAGGLE_USERNAME"] = "horvthdmmrton"
+os.environ["KAGGLE_USERNAME"] = "horvthdmmrton" #docker env var majd
 os.environ["KAGGLE_KEY"] = "KGAT_2e7fe800a42750e3587f81735f08628b"
 from kaggle.api.kaggle_api_extended import KaggleApi
+
 
 def collect_datasets():
     sources = load_sources()
@@ -21,7 +20,7 @@ def collect_datasets():
         else:
             print(f"{name} dataset is up to date.")
 
-def should_download_dataset(name: str, url: str) -> bool:
+def should_download_dataset(name: str, url: str) -> tuple[bool, int | None]:
     local_version = get_local_version(name)
     remote_version = get_remote_version(url)
 
@@ -98,4 +97,5 @@ def load_sources(path: str = "./data/sources.json") -> dict:
     with open(path, "r") as f:
         return json.load(f)
 
-collect_datasets()
+if __name__ == "__main__":
+    collect_datasets()

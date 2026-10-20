@@ -84,4 +84,5 @@ def predict_and_visualize():
     model_pct = ((pred_changed_xgboost / pred_orig_xgboost) - 1) * 100
     print(f"Modell által becsült változás: +{model_pct:.2f}%")
 
-predict_and_visualize()
+if __name__ == "__main__":
+    predict_and_visualize()

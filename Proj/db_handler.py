@@ -29,19 +29,17 @@ def get_from_db(table_name: str) -> pd.DataFrame | None:
         return None
 
     
-sources = dc.load_sources()
-for name in sources:
-    raw_df = dc.get_latest_as_df(name)
-    cleaned_df = cleaning.clean_data(raw_df)
-    raw_name = f"raw_{name}"
-    cleaned_name = f"cleaned_{name}"
+def refresh_database() -> None:
+    """Load the latest collected datasets and their cleaned versions."""
+    sources = dc.load_sources()
+    for name in sources:
+        raw_df = dc.get_latest_as_df(name)
+        raw_name = f"raw_{name}"
+        cleaned_name = f"cleaned_{name}"
 
-    if raw_df is not None:
-        load_to_db(raw_df, raw_name)
-    if cleaned_df is not None:
-        load_to_db(cleaned_df, cleaned_name)
-
-
-
-
+        if raw_df is not None:
+            load_to_db(raw_df, raw_name)
+            cleaned_df = cleaning.clean_data(raw_df)
+            if cleaned_df is not None:
+                load_to_db(cleaned_df, cleaned_name)
 

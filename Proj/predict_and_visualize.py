@@ -164,7 +164,16 @@ def predict_and_visualize_time_series():
 
     year_to_explain = 2018
     country_to_explain = "Hungary"
-    row = np.where((test_years == year_to_explain) & (test_countries == country_to_explain))[0][0]
+    matching_rows = np.where(
+        (test_years == year_to_explain) & (test_countries == country_to_explain)
+    )[0]
+    if len(matching_rows) == 0:
+        print(
+            f"Skipping LIME/SHAP explanation: no data for "
+            f"{country_to_explain} in {year_to_explain}."
+        )
+        return
+    row = matching_rows[0]
     explanation = explainer.explain_instance(
     scaled_test[row],
     lambda samples: scaler_y.inverse_transform(
@@ -299,6 +308,5 @@ def print_surrogate_tree():
     plt.title("Surrogate Decision Tree")
     plt.show()
 
-print_surrogate_tree()
-#predict_and_visualize()
-#predict_and_visualize_time_series()
+if __name__ == "__main__":
+    print_surrogate_tree()

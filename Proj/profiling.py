@@ -50,33 +50,38 @@ def generate_profile_report(df, report_name):
     if x_axis and y_axis:
         df_grouped_avg = df.groupby(x_axis)[y_axis].mean().reset_index()
         df_grouped_median = df.groupby(x_axis)[y_axis].median().reset_index()
-    fig = go.Figure()
+        fig = go.Figure()
 
-    # Mean
-    fig.add_trace(go.Scatter(
-        x=df_grouped_avg[x_axis],
-        y=df_grouped_avg[y_axis],
-        mode='lines+markers',
-        name='Mean'
-    ))
+        # Mean
+        fig.add_trace(go.Scatter(
+            x=df_grouped_avg[x_axis],
+            y=df_grouped_avg[y_axis],
+            mode='lines+markers',
+            name='Mean'
+        ))
 
-    # Median
-    fig.add_trace(go.Scatter(
-        x=df_grouped_median[x_axis],
-        y=df_grouped_median[y_axis],
-        mode='lines+markers',
-        name='Median'
-    ))
+        # Median
+        fig.add_trace(go.Scatter(
+            x=df_grouped_median[x_axis],
+            y=df_grouped_median[y_axis],
+            mode='lines+markers',
+            name='Median'
+        ))
 
-    fig.update_layout(
-        title=f"{y_axis} vs {x_axis}",
-        xaxis_title=x_axis,
-        yaxis_title=y_axis
-    )
+        fig.update_layout(
+            title=f"{y_axis} vs {x_axis}",
+            xaxis_title=x_axis,
+            yaxis_title=y_axis
+        )
 
-    st.plotly_chart(fig, width="content")
+        st.plotly_chart(fig, width="content")
        
 
 
-df = pd.read_csv("profiling_data/Data.csv")
-generate_profile_report(df, "Global Warming Profile")
+def run_profiling() -> None:
+    df = pd.read_csv("profiling_data/Data.csv")
+    generate_profile_report(df, "Global Warming Profile")
+
+
+if __name__ == "__main__":
+    run_profiling()

@@ -57,4 +57,5 @@ def analyze_decision():
   cf_all_df = cf_all.cf_examples_list[0].final_cfs_df
   print(cf_all_df)
 
-analyze_decision()
+if __name__ == "__main__":
+  analyze_decision()
