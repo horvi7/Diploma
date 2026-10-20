@@ -3,6 +3,7 @@ import optuna
 import xgboost as xgb
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
 
 from optuna_parameters import (
     LGBM_SEARCH_SPACE,
@@ -10,6 +11,41 @@ from optuna_parameters import (
     RFR_SEARCH_SPACE,
     XGB_SEARCH_SPACE,
 )
+from model_parameters import LGBM_PARAMS, RFR_PARAMS, XGB_PARAMS
+
+
+MANUAL_PARAMS = {
+    "RandomForest": {
+    "n_estimators": 50,
+    "max_depth": 6,
+    "min_samples_split": 5,
+    "min_samples_leaf": 2,
+    "bootstrap": True,
+    "max_leaf_nodes": 30
+    },
+
+    "LightGBM": {
+    "n_estimators": 70,
+    "learning_rate": 0.01,
+    "max_depth": 4,
+    "min_child_samples": 12,
+    "subsample": 0.70,
+    "colsample_bytree": 0.72,
+    "reg_alpha": 0.74,
+    "reg_lambda": 0.21,
+    },
+
+    "XGBoost": { "n_estimators": 20,
+    "learning_rate": 0.2,
+    "max_depth": 4,
+    "min_child_weight": 4,
+    "gamma": 3.2,
+    "subsample": 0.93,
+    "colsample_bytree": 0.69,
+    "reg_alpha": 0.38,
+    "reg_lambda": 0.3
+    },
+}
 
 
 def objective_RFR(trial, features, target):
@@ -106,3 +142,45 @@ def get_best_params_for_models(features, target):
         print(f"Optuna {display_name} best CV R2: {study.best_value:.4f}")
 
     return best_params
+
+
+def compare_manual_and_optuna(features, target):
+    """Compare manual and saved Optuna parameters by training R2."""
+    x_train, _, y_train, _ = train_test_split(
+        features, target, test_size=0.2, random_state=32
+    )
+    parameter_sets = {
+        "Manual": MANUAL_PARAMS,
+        "Optuna": {
+            "RandomForest": RFR_PARAMS,
+            "LightGBM": LGBM_PARAMS,
+            "XGBoost": XGB_PARAMS,
+        },
+    }
+
+    print("\nManual vs Optuna training R2:")
+    results = {}
+    for model_name in ("RandomForest", "LightGBM", "XGBoost"):
+        results[model_name] = {}
+        for parameter_name, parameters in parameter_sets.items():
+            model = _create_model(model_name, parameters[model_name])
+            model.fit(x_train, y_train)
+            score = model.score(x_train, y_train)
+            results[model_name][parameter_name] = score
+            print(f"{model_name} ({parameter_name}): R2={score:.4f}")
+
+    return results
+
+
+def _create_model(model_name, parameters):
+    if model_name == "RandomForest":
+        return RandomForestRegressor(**parameters, random_state=32)
+    if model_name == "LightGBM":
+        return lgb.LGBMRegressor(**parameters, random_state=32, n_jobs=-1)
+    if model_name == "XGBoost":
+        return xgb.XGBRegressor(
+            **parameters,
+            random_state=32,
+            n_jobs=-1,
+        )
+    raise ValueError(f"Unsupported model name: {model_name}")
