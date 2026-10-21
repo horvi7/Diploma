@@ -6,83 +6,58 @@ import trained_models as tm
 
 def predict_and_visualize():
     co2_df = db.get_from_db("gold_co2")
-    co2_df = co2_df[[
-        "co2",
-        "log_population",
-        "log_gdp_per_population",
-        "log_energy_per_gdp",
-        "log_co2_per_energy",
-    ]]
+    row = co2_df.iloc[0]
 
-    features = co2_df[[
-        "log_population",
-        "log_gdp_per_population",
-        "log_energy_per_gdp",
-        "log_co2_per_energy",
-    ]]
+    # The gold table stores these Kaya factors as log1p-transformed values.
+    population = np.expm1(row["log_population"])
+    gdp_per_population = np.expm1(row["log_gdp_per_population"])
+    energy_per_gdp = np.expm1(row["log_energy_per_gdp"])
 
-    test_data = features.iloc[[0]]
+    # CO2 intensity is derived from the observed target and is not used as a
+    # machine-learning feature.
+    energy = population * gdp_per_population * energy_per_gdp
+    co2_per_energy = row["co2"] / energy
 
-    changed_test_data = test_data.copy()
-    changed_test_data["log_population"] = changed_test_data["log_population"] + np.log(0.9)
+    changed_population = population * 0.9
+    original_features = co2_df[
+        ["log_population", "log_gdp_per_population", "log_energy_per_gdp"]
+    ].iloc[[0]]
+    changed_features = original_features.copy()
+    changed_features["log_population"] = np.log1p(changed_population)
 
-    row = test_data.iloc[0]
-    changed_row = changed_test_data.iloc[0]
-
-    kaya_log_orig = (
-        row["log_population"]
-        + row["log_gdp_per_population"]
-        + row["log_energy_per_gdp"]
-        + row["log_co2_per_energy"]
+    original_co2 = (
+        population
+        * gdp_per_population
+        * energy_per_gdp
+        * co2_per_energy
     )
-    kaya_log_changed = (
-        changed_row["log_population"]
-        + changed_row["log_gdp_per_population"]
-        + changed_row["log_energy_per_gdp"]
-        + changed_row["log_co2_per_energy"]
+    changed_co2 = (
+        changed_population
+        * gdp_per_population
+        * energy_per_gdp
+        * co2_per_energy
     )
+    co2_change = (changed_co2 / original_co2 - 1) * 100
 
-    # Visszaalakítás a tényleges értékre
-    kaya_orig_val = np.exp(kaya_log_orig)
-    kaya_changed_val = np.exp(kaya_log_changed)
-    kaya_pct = ((kaya_changed_val / kaya_orig_val) - 1) * 100
+    print(f"Eredeti népesség: {population:.2f}")
+    print(f"Változott népesség: {changed_population:.2f}")
+    print(f"Eredeti CO2: {original_co2:.2f}")
+    print(f"Változott CO2: {changed_co2:.2f}")
+    print(f"Kaya Identity CO2 változása: {co2_change:.2f}%\n")
 
-    print(f"Kaya Eredeti kibocsátás: {kaya_orig_val:.2f}")
-    print(f"Kaya Változott kibocsátás: {kaya_changed_val:.2f}")
-    print(f"Kaya tényleges növekedése: +{kaya_pct:.2f}%\n")
+    for model_name in ("RandomForest", "LightGBM", "XGBoost"):
+        model = tm.get_model(model_name)
+        original_prediction = model.predict(original_features)[0]
+        changed_prediction = model.predict(changed_features)[0]
+        model_change = (changed_prediction / original_prediction - 1) * 100
+        difference = model_change - co2_change
 
-    # Modell predikció
-    random_forest_model = tm.get_model('RandomForest')
+        print(f"{model_name}:")
+        print(f"  Eredeti predikció: {original_prediction:.2f}")
+        print(f"  Változott predikció: {changed_prediction:.2f}")
+        print(f"  Modell CO2 változása: {model_change:.2f}%")
+        print(f"  Eltérés a Kaya-változástól: {difference:.2f} százalékpont\n")
 
-    lightgbm_model = tm.get_model('LightGBM')
-
-    xgboost_model = tm.get_model('XGBoost')
-
-    #Itt majd Írás előtt Kaya Identity scenariokat kipróbálni és a modelleket öszehasonlítani
-    #Most csak random próba
-
-    pred_orig_random_forest = random_forest_model.predict(test_data)[0]
-    pred_orig_lightgbm = lightgbm_model.predict(test_data)[0]
-    pred_orig_xgboost = xgboost_model.predict(test_data)[0]
-
-    pred_changed_random_forest = random_forest_model.predict(changed_test_data)[0]
-    pred_changed_lightgbm = lightgbm_model.predict(changed_test_data)[0]
-    pred_changed_xgboost = xgboost_model.predict(changed_test_data)[0]
-
-    model_pct = ((pred_changed_random_forest / pred_orig_random_forest) - 1) * 100
-    print(f"Random Forest Predikció (Eredeti): {pred_orig_random_forest:.2f}")
-    print(f"Random Forest Predikció (Változott): {pred_changed_random_forest:.2f}")
-    print(f"Modell által becsült változás: +{model_pct:.2f}%")
-
-    print(f"LightGBM Predikció (Eredeti): {pred_orig_lightgbm:.2f}")
-    print(f"LightGBM Predikció (Változott): {pred_changed_lightgbm:.2f}")
-    model_pct = ((pred_changed_lightgbm / pred_orig_lightgbm) - 1) * 100
-    print(f"Modell által becsült változás: +{model_pct:.2f}%")
-
-    print(f"XGBoost Predikció (Eredeti): {pred_orig_xgboost:.2f}")
-    print(f"XGBoost Predikció (Változott): {pred_changed_xgboost:.2f}")
-    model_pct = ((pred_changed_xgboost / pred_orig_xgboost) - 1) * 100
-    print(f"Modell által becsült változás: +{model_pct:.2f}%")
 
 if __name__ == "__main__":
     predict_and_visualize()

@@ -9,25 +9,12 @@ from model_parameters import LGBM_PARAMS, RFR_PARAMS, XGB_PARAMS
 def get_model(model_type):
     co2_df = db.get_from_db("gold_co2")
     print(co2_df.head())
-    #Ez Kaya
-    # co2_df = co2_df[[
-    #     "co2",
-    #     "log_population",
-    #     "log_gdp_per_population",
-    #     "log_energy_per_gdp",
-    #     "log_co2_per_energy",
-    # ]]
 
-    # target = co2_df["co2"]
-    # features = co2_df[[
-    #     "log_population",
-    #     "log_gdp_per_population",
-    #     "log_energy_per_gdp",
-    #     "log_co2_per_energy",
-    # ]]
-    #Sima
     target = co2_df["co2"]
     features = co2_df.drop(columns="co2")
+    features = features[
+        ["log_population", "log_gdp_per_population", "log_energy_per_gdp"]
+    ]
 
     x_train, _, y_train, _ = train_test_split(
         features, target, test_size=0.2, random_state=32

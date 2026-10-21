@@ -1,61 +1,60 @@
 import dice_ml
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 import db_handler as db
 import trained_models as tm
 
+#Itt megfelelő featureök kellenek a modellben is. Kisérletezni lehet. Kusnetzet a min és max követi
+def analyze_decision(df, features):
+    df = db.get_from_db("gold_co2")
+    df = df[
+        ["co2", "log_gdp_per_population"]
+    ].reset_index(drop=True)
+    features = df.drop(columns="co2")
 
-def analyze_decision():
-  df = db.get_from_db("gold_co2")
-  print(df.head())
+    dataset = dice_ml.Data(
+        dataframe=df,
+        continuous_features=features.columns.tolist(),
+        outcome_name="co2",
+    )
+    model = tm.get_model("XGBoost")
+    dice_model = dice_ml.Model(
+        model=model,
+        backend="sklearn",
+        model_type="regressor",
+    )
 
-  features_kaya = df[[
-      "log_population",
-      "log_gdp_per_population",
-      "log_energy_per_gdp",
-      "log_co2_per_energy",
-  ]]
-  df_kaya = df[[
-      "co2",
-      "log_population",
-      "log_gdp_per_population",
-      "log_energy_per_gdp",
-      "log_co2_per_energy",
-  ]]
+    explanation = dice_ml.Dice(dataset, dice_model)
+    selected_rows = {
+        "Biggest GDP": df["log_gdp_per_population"].idxmax(),
+        "Lowest GDP": df["log_gdp_per_population"].idxmin()
+    }
 
-  features_all = df.drop(columns=["co2"])
-  print("Features_all: ", features_all.columns.tolist())
+    for label, row_index in selected_rows.items():
+        feature_row_to_explain = features.iloc[[row_index]]
+        prediction = model.predict(feature_row_to_explain)
+        counterfactual = explanation.generate_counterfactuals(
+            feature_row_to_explain,
+            total_CFs=1,
+            desired_range=[prediction[0] * 1.01, prediction[0] * 1.15],
+            features_to_vary=features.columns.tolist(),
+        )
 
-  dice_dataset_kaya = dice_ml.Data(dataframe=df_kaya, continuous_features=features_kaya.columns.tolist(), outcome_name="co2")
-
-  dice_dataset_all = dice_ml.Data(dataframe=df, continuous_features=features_all.columns.tolist(), outcome_name="co2")
-
-  model = tm.get_model('RandomForest')
-
-  dice_model = dice_ml.Model(model=model, backend="sklearn",model_type="regressor")
-
-  exp = dice_ml.Dice(dice_dataset_kaya, dice_model)
-
-  custom_feature = features_kaya.iloc[[0]]
-
-  prediction = model.predict(custom_feature)
-  print(f"Prediction for custom feature: {prediction}")
-
-  decrease_range_low = 0.8
-  decrease_range_high = 0.9
-
-  cf = exp.generate_counterfactuals(custom_feature, total_CFs=1, desired_range=[prediction[0]*decrease_range_low , prediction[0]*decrease_range_high], features_to_vary=features_kaya.columns.tolist())
-
-  cf_df = cf.cf_examples_list[0].final_cfs_df
-
-  print("\nGenerált Counterfactual: ")
-  print(cf_df)
-
-  print("Összes feature-el: ")
-  exp = dice_ml.Dice(dice_dataset_all, dice_model)
-  custom_feature = features_all.iloc[[0]]
-  cf_all = exp.generate_counterfactuals(custom_feature, total_CFs=1, desired_range=[prediction[0]*decrease_range_low , prediction[0]*decrease_range_high], features_to_vary=features_all.columns.tolist())
-  cf_all_df = cf_all.cf_examples_list[0].final_cfs_df
-  print(cf_all_df)
+        changed_features = counterfactual.cf_examples_list[0].final_cfs_df
+        comparison = pd.concat(
+            [
+                feature_row_to_explain.assign(version="Original"),
+                changed_features.assign(version="Changed"),
+            ],
+            ignore_index=True,
+        )
+        print(
+            f"\n{label} (GDP: {df.loc[row_index, 'log_gdp_per_population']}, "
+            f"CO2: {df.loc[row_index, 'co2']}):"
+        )
+        print(comparison[["version"] + features.columns.tolist()])
 
 if __name__ == "__main__":
   analyze_decision()

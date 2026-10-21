@@ -12,66 +12,41 @@ from lime.lime_tabular import RecurrentTabularExplainer
 import db_handler as db
 import trained_models as tm
 
-
-def predict_and_visualize():
-    co2_df = db.get_from_db("gold_co2")
-    print("Df: ", co2_df.head())
-    return
-    target = co2_df.iloc[:, 0]
-    features = co2_df.iloc[:, 1:]
-
+def predict_and_visualize_regressor(features, target):
     _, x_test, _, y_test = train_test_split(features, target, test_size=0.2, random_state=32)
 
     random_forest_model = tm.get_model('RandomForest')
     rfr_predictions = random_forest_model.predict(x_test)
-    print("Random Forest Predictions:", rfr_predictions)
 
     lightgbm_model = tm.get_model('LightGBM')
     lgbm_predictions = lightgbm_model.predict(x_test)
-    print("LightGBM Predictions:", lgbm_predictions)
 
     xgboost_model = tm.get_model('XGBoost')
     xgb_predictions = xgboost_model.predict(x_test)
-    print("XGBoost Predictions:", xgb_predictions)
-
 
     rfr_mse = mean_squared_error(y_test, rfr_predictions)
     rfr_mae = mean_absolute_error(y_test, rfr_predictions)
     print(f"Random Forest MSE: {rfr_mse}, MAE: {rfr_mae}")
-
-    plt.figure(figsize=(15, 5))
-    plt.scatter(y_test, rfr_predictions, alpha=0.5)
-    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], linestyle='--') 
-    plt.xlabel('Actual CO2 Emissions')
-    plt.ylabel('Predicted CO2 Emissions')
-    plt.title('Random Forest Predictions')
-    plt.show()
-
-
+    plot_results(y_test, rfr_predictions, "Random Forest")
+    
     lgbm_mse = mean_squared_error(y_test, lgbm_predictions)
     lgbm_mae = mean_absolute_error(y_test, lgbm_predictions)
     print(f"LightGBM MSE: {lgbm_mse}, MAE: {lgbm_mae}")
-
-    plt.figure(figsize=(15, 5))
-    plt.scatter(y_test, lgbm_predictions, alpha=0.5)
-    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], linestyle='--') 
-    plt.xlabel('Actual CO2 Emissions')
-    plt.ylabel('Predicted CO2 Emissions') 
-    plt.title('LightGBM Predictions')
-    plt.show()
+    plot_results(y_test, lgbm_predictions, "LightGBM")
 
     xgb_mse = mean_squared_error(y_test, xgb_predictions)
     xgb_mae = mean_absolute_error(y_test, xgb_predictions)
     print(f"XGBoost MSE: {xgb_mse}, MAE: {xgb_mae}")
+    plot_results(y_test, xgb_predictions, "XGBoost")
 
+def plot_results(y_test, predictions, model_name):
     plt.figure(figsize=(15, 5))
-    plt.scatter(y_test, xgb_predictions, alpha=0.6)
-    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], linestyle='--')
-    plt.xlabel("Actual CO2")
-    plt.ylabel("Predicted CO2")
-    plt.title("Actual vs Predicted")
+    plt.scatter(y_test, predictions, alpha=0.5)
+    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], linestyle='--') 
+    plt.xlabel('Actual CO2 Emissions')
+    plt.ylabel('Predicted CO2 Emissions')
+    plt.title(f'{model_name} Predictions')
     plt.show()
-
 
 def predict_and_visualize_time_series():
     df = db.get_from_db("gold_co2_time_series")
@@ -271,12 +246,8 @@ def process_Xy(df, lookback=10):
     return x, y, target_years, target_countries
 
 
-def print_surrogate_tree():
+def print_surrogate_tree(features, target):
     model = tm.get_model('XGBoost')
-    co2_df = db.get_from_db("gold_co2")
-
-    target = co2_df.iloc[:, 0]
-    features = co2_df.iloc[:, 1:]
 
     x_train, x_test, _, _ = train_test_split(features, target, test_size=0.2, random_state=32)
 
@@ -284,16 +255,11 @@ def print_surrogate_tree():
     y_test_for_surrogate = model.predict(x_test)
 
     surrogate_model = DecisionTreeRegressor(max_depth=3, random_state=32)
-
-
     surrogate_model.fit(x_train, y_train_for_surrogate)
-
     y_test_surrogate_pred = surrogate_model.predict(x_test)
-
     fidelity = r2_score(y_test_for_surrogate, y_test_surrogate_pred)
 
     print(f"Fidelity of surrogate model: {fidelity:.4f}")
-
 
     plt.figure(figsize=(20, 10))
 

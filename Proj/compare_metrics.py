@@ -3,9 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from time import perf_counter
 from sklearn.base import clone
-import db_handler as db
 import numpy as np
-from memory_profiler import memory_usage
 
 def train_model(model, features, target):
     model.fit(features, target)
