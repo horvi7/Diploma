@@ -4,7 +4,8 @@ import xgboost as xgb
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 
-import db_handler as db
+from data import db_handler as db
+
 
 #Ez nem nagyon van használva, mert ez csak az eredeti manuális próbálkozás, de aztán optuna be lett vezetve, majd a paraméterek elmentve
 def train_random_forest(features, target):

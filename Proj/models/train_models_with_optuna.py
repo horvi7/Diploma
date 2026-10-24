@@ -1,18 +1,17 @@
 import lightgbm as lgb
 import optuna
+import pandas as pd
 import xgboost as xgb
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score, train_test_split
 
-from optuna_parameters import (
+from models.model_parameters import LGBM_PARAMS, RFR_PARAMS, XGB_PARAMS
+from models.optuna_parameters import (
     LGBM_SEARCH_SPACE,
     OPTUNA_TRIALS,
     RFR_SEARCH_SPACE,
     XGB_SEARCH_SPACE,
 )
-from model_parameters import LGBM_PARAMS, RFR_PARAMS, XGB_PARAMS
-
 
 MANUAL_PARAMS = {
     "RandomForest": {
@@ -144,7 +143,7 @@ def get_best_params_for_models(features, target):
     return best_params
 
 
-def compare_manual_and_optuna(features, target):
+def compare_manual_and_optuna(features: pd.DataFrame, target: pd.Series):
     """Compare manual and saved Optuna parameters by training R2."""
     x_train, _, y_train, _ = train_test_split(
         features, target, test_size=0.2, random_state=32

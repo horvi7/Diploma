@@ -1,8 +1,12 @@
 #Prefect el eltt hagyva
 import json
 import os
+
 import kagglehub
 import pandas as pd
+
+from data import db_handler as db
+
 os.environ["KAGGLE_USERNAME"] = "horvthdmmrton" #docker env var majd
 os.environ["KAGGLE_KEY"] = "KGAT_2e7fe800a42750e3587f81735f08628b"
 from kaggle.api.kaggle_api_extended import KaggleApi
@@ -17,6 +21,7 @@ def collect_datasets():
         if should_download:
             print(f"Downloading {name} dataset...")
             download_dataset(url, name, version)
+            db.refresh_database()
         else:
             print(f"{name} dataset is up to date.")
 

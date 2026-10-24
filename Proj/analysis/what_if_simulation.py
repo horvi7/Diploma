@@ -1,29 +1,25 @@
 import numpy as np
+import pandas as pd
+from data import db_handler as db
+from models import trained_models as tm
 
-import db_handler as db
-import trained_models as tm
 
+def predict_and_visualize(df: pd.DataFrame):
+    row = df.iloc[0]
 
-def predict_and_visualize():
-    co2_df = db.get_from_db("gold_co2")
-    row = co2_df.iloc[0]
+    # Alapból logaritmikus skálán vannak az adatok, ezért vissza kell alakítani őket
+    population = np.expm1(row["population"])
+    gdp_per_population = np.expm1(row["gdp_per_population"])
+    energy_per_gdp = np.expm1(row["energy_per_gdp"])
 
-    # The gold table stores these Kaya factors as log1p-transformed values.
-    population = np.expm1(row["log_population"])
-    gdp_per_population = np.expm1(row["log_gdp_per_population"])
-    energy_per_gdp = np.expm1(row["log_energy_per_gdp"])
-
-    # CO2 intensity is derived from the observed target and is not used as a
-    # machine-learning feature.
+    # CO2 intenstiy target leakage lenne
     energy = population * gdp_per_population * energy_per_gdp
     co2_per_energy = row["co2"] / energy
 
     changed_population = population * 0.9
-    original_features = co2_df[
-        ["log_population", "log_gdp_per_population", "log_energy_per_gdp"]
-    ].iloc[[0]]
+    original_features = df[["population", "gdp_per_population", "energy_per_gdp"]].iloc[[0]]
     changed_features = original_features.copy()
-    changed_features["log_population"] = np.log1p(changed_population)
+    changed_features["population"] = np.log1p(changed_population)
 
     original_co2 = (
         population
@@ -46,7 +42,7 @@ def predict_and_visualize():
     print(f"Kaya Identity CO2 változása: {co2_change:.2f}%\n")
 
     for model_name in ("RandomForest", "LightGBM", "XGBoost"):
-        model = tm.get_model(model_name)
+        model = tm.get_model(model_name, df[["population", "gdp_per_population", "energy_per_gdp"]], df["co2"])
         original_prediction = model.predict(original_features)[0]
         changed_prediction = model.predict(changed_features)[0]
         model_change = (changed_prediction / original_prediction - 1) * 100

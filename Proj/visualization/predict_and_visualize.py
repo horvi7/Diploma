@@ -1,27 +1,39 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.tree import DecisionTreeRegressor, plot_tree
+import pandas as pd
 import shap
 from keras.callbacks import EarlyStopping
+from lime.lime_tabular import RecurrentTabularExplainer
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.tree import DecisionTreeRegressor, plot_tree
 from tensorflow import keras
 from tensorflow.keras import layers
-from lime.lime_tabular import RecurrentTabularExplainer
-import db_handler as db
-import trained_models as tm
 
-def predict_and_visualize_regressor(features, target):
+from data import db_handler as db
+from models import trained_models as tm
+
+
+TIME_SERIES_FEATURES = [
+    "energy_per_capita",
+    "energy_per_gdp",
+    "primary_energy_consumption",
+    "population",
+    "gdp",
+]
+
+
+def predict_and_visualize_regressor(features: pd.DataFrame, target: pd.Series):
     _, x_test, _, y_test = train_test_split(features, target, test_size=0.2, random_state=32)
 
-    random_forest_model = tm.get_model('RandomForest')
+    random_forest_model = tm.get_model('RandomForest', features, target)
     rfr_predictions = random_forest_model.predict(x_test)
 
-    lightgbm_model = tm.get_model('LightGBM')
+    lightgbm_model = tm.get_model('LightGBM', features, target)
     lgbm_predictions = lightgbm_model.predict(x_test)
 
-    xgboost_model = tm.get_model('XGBoost')
+    xgboost_model = tm.get_model('XGBoost', features, target)
     xgb_predictions = xgboost_model.predict(x_test)
 
     rfr_mse = mean_squared_error(y_test, rfr_predictions)
@@ -124,19 +136,6 @@ def predict_and_visualize_time_series():
     plt.legend()
     plt.show()
 
-
-    #LIME magyarázat
-    features = ['energy_per_capita', 'energy_per_gdp', 'primary_energy_consumption', 'log_population', 'log_gdp']
-
-    explainer = RecurrentTabularExplainer(
-        training_data=scaled_train,
-        feature_names=features,
-        mode='regression',
-        training_labels=target_train.flatten(),
-        random_state=42,
-        discretize_continuous=True #Enélkül is próba
-    )
-
     year_to_explain = 2018
     country_to_explain = "Hungary"
     matching_rows = np.where(
@@ -149,63 +148,66 @@ def predict_and_visualize_time_series():
         )
         return
     row = matching_rows[0]
-    explanation = explainer.explain_instance(
-    scaled_test[row],
-    lambda samples: scaler_y.inverse_transform(
-        model.predict(samples, verbose=0)
-    ).flatten(),
-    num_features=30, #Mennyi magyarázatot ad ki lokálisan a minta körül.
-    num_samples=1000)
 
-    fig = explanation.as_pyplot_figure()
+    explain_with_lime(model, scaled_train, target_train, scaled_test[row], scaler_y)
+    explain_with_shap(model, scaled_train, scaled_test[row], scaler_y)
+
+
+def explain_with_lime(model, training_data, training_labels, instance, target_scaler):
+    explainer = RecurrentTabularExplainer(
+        training_data=training_data,
+        feature_names=TIME_SERIES_FEATURES,
+        mode="regression",
+        training_labels=training_labels.flatten(),
+        random_state=42,
+        discretize_continuous=True,
+    )
+    explanation = explainer.explain_instance(
+        instance,
+        lambda samples: target_scaler.inverse_transform(
+            model.predict(samples, verbose=0)
+        ).flatten(),
+        num_features=30,
+        num_samples=1000,
+    )
+
+    explanation.as_pyplot_figure()
     plt.tight_layout()
     plt.show()
 
-    # SHAP magyarázat
 
-    # 1. Background adatok
-    background = scaled_train[
+def explain_with_shap(model, training_data, instance, target_scaler):
+    background = training_data[
         np.random.default_rng(42).choice(
-            len(scaled_train),
-            size=min(100, len(scaled_train)),
-            replace=False
+            len(training_data),
+            size=min(100, len(training_data)),
+            replace=False,
         )
     ]
-
-    # 2. SHAP explainer
-    explainer = shap.GradientExplainer(model, background) #Íráshoz: link hogy miért ez.
-
-    # 3. Kiválasztott megfigyelés magyarázata
-    shap_values = explainer.shap_values(scaled_test[row:row+1])
-
+    explainer = shap.GradientExplainer(model, background)
+    shap_values = explainer.shap_values(instance[np.newaxis, ...])
     shap_values = np.array(shap_values).squeeze()
 
-    # 4. Feature-nevek időlépésekkel
-    n_timesteps = scaled_test.shape[1]
-    #Csak h mit írjon ki a magyarázatban
+    n_timesteps = instance.shape[0]
     feature_names = [
         f"{feature}_t-{n_timesteps - 1 - timestep}"
         for timestep in range(n_timesteps)
-        for feature in features
+        for feature in TIME_SERIES_FEATURES
     ]
-
-    # 5. SHAP értékek visszaskálázása eredeti CO2-skálára
-    shap_values = shap_values.flatten() * scaler_y.scale_[0]
+    shap_values = shap_values.flatten() * target_scaler.scale_[0]
 
     base_value = (
         model.predict(background, verbose=0).mean()
-        * scaler_y.scale_[0]
-        + scaler_y.mean_[0]
+        * target_scaler.scale_[0]
+        + target_scaler.mean_[0]
     )
 
-    # 6. Ábra
     explanation = shap.Explanation(
         values=shap_values,
         base_values=base_value,
-        data=scaled_test[row].flatten(),
-        feature_names=feature_names
+        data=instance.flatten(),
+        feature_names=feature_names,
     )
-
     shap.plots.waterfall(explanation, max_display=20)
 
 def process_Xy(df, lookback=10):
@@ -213,8 +215,8 @@ def process_Xy(df, lookback=10):
     df = df.sort_values(["name", "year"]).reset_index(drop=True)
 
     features = [
-        "log_gdp",
-        "log_population",
+        "gdp",
+        "population",
         "energy_per_capita",
         "energy_per_gdp",
         "primary_energy_consumption"
@@ -247,7 +249,7 @@ def process_Xy(df, lookback=10):
 
 
 def print_surrogate_tree(features, target):
-    model = tm.get_model('XGBoost')
+    model = tm.get_model('XGBoost', features, target)
 
     x_train, x_test, _, _ = train_test_split(features, target, test_size=0.2, random_state=32)
 
@@ -274,5 +276,8 @@ def print_surrogate_tree(features, target):
     plt.title("Surrogate Decision Tree")
     plt.show()
 
-if __name__ == "__main__":
-    print_surrogate_tree()
+
+def predict_and_visualize(features: pd.DataFrame, target: pd.Series):
+    predict_and_visualize_regressor(features, target)
+    predict_and_visualize_time_series()
+    print_surrogate_tree(features, target)
