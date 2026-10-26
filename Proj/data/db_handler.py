@@ -1,3 +1,5 @@
+import os
+
 import duckdb
 import pandas as pd
 import numpy as np
@@ -5,7 +7,7 @@ import numpy as np
 from data import cleaning
 from data import data_collector as dc
 
-DB_PATH = "database.duckdb"
+DB_PATH = os.environ.get("DATABASE_PATH", "database.duckdb")
 
 def load_to_db(df: pd.DataFrame, table_name: str) -> None:
     if not table_name.isidentifier():
@@ -13,7 +15,8 @@ def load_to_db(df: pd.DataFrame, table_name: str) -> None:
 
     try:
         with duckdb.connect(DB_PATH) as conn:
-            conn.execute(f'CREATE OR REPLACE TABLE "{table_name}" AS SELECT * FROM df')
+            conn.execute(f'DROP TABLE IF EXISTS "{table_name}"')
+            conn.from_df(df).create(table_name)
     except Exception as e:
         print(f"Hiba az adatok mentésekor. Tábla: {table_name} Ex: {e}")
 
