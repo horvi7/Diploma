@@ -13,7 +13,10 @@ def train_model(model, features, target):
     model.fit(features, target)
 
 
-def print_metric_results(model_name, mse, mae, r2):
+def print_metric_results(model_name, actual, predictions):
+    mse = mean_squared_error(actual, predictions)
+    mae = mean_absolute_error(actual, predictions)
+    r2 = r2_score(actual, predictions)
     print(f"{model_name} MSE: {mse}, MAE: {mae}, R2: {r2}")
 
 
@@ -32,7 +35,13 @@ def print_results(model_name, train_times, throughput_values):
     )
 
 
-def benchmark_model(model, x_train, y_train, x_test, sample_size, n_repeats):
+def benchmark_model(model,features, target, sample_size, n_repeats):
+    x_train, x_test, y_train, _ = train_test_split(
+        features,
+        target,
+        test_size=0.2,
+        random_state=32,
+    )
     train_times = []
     throughput_values = []
 
@@ -72,36 +81,18 @@ def make_metrics(features: pd.DataFrame, target: pd.Series):
         random_state=32,
     )
 
-    # Evaluate model predictions.
-    random_forest_model = tm.get_model("RandomForest", features, target)
-    rfr_predictions = random_forest_model.predict(x_test)
+    models = [
+        ("Random Forest", tm.get_model("RandomForest", features, target)),
+        ("LightGBM", tm.get_model("LightGBM", features, target)),
+        ("XGBoost", tm.get_model("XGBoost", features, target)),
+    ]
 
-    lightgbm_model = tm.get_model("LightGBM", features, target)
-    lgbm_predictions = lightgbm_model.predict(x_test)
-
-    xgboost_model = tm.get_model("XGBoost", features, target)
-    xgb_predictions = xgboost_model.predict(x_test)
-
-    rfr_mse = mean_squared_error(y_test, rfr_predictions)
-    rfr_mae = mean_absolute_error(y_test, rfr_predictions)
-    rfr_r2 = r2_score(y_test, rfr_predictions)
-
-    lgbm_mse = mean_squared_error(y_test, lgbm_predictions)
-    lgbm_mae = mean_absolute_error(y_test, lgbm_predictions)
-    lgbm_r2 = r2_score(y_test, lgbm_predictions)
-
-    xgb_mse = mean_squared_error(y_test, xgb_predictions)
-    xgb_mae = mean_absolute_error(y_test, xgb_predictions)
-    xgb_r2 = r2_score(y_test, xgb_predictions)
-
-    print_metric_results("Random Forest", rfr_mse, rfr_mae, rfr_r2)
-    print_metric_results("LightGBM", lgbm_mse, lgbm_mae, lgbm_r2)
-    print_metric_results("XGBoost", xgb_mse, xgb_mae, xgb_r2)
+    for model_name, model in models:
+        print_metric_results(model_name, y_test, model.predict(x_test))
 
     # Benchmark training time and prediction throughput.
-    models = [random_forest_model, lightgbm_model, xgboost_model]
     sample_size = 100
     n_repeats = 20
 
-    for model in models:
-        benchmark_model(model, x_train, y_train, x_test, sample_size, n_repeats)
+    for _, model in models:
+        benchmark_model(model, features, target, sample_size, n_repeats)

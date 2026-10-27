@@ -7,7 +7,7 @@ import pandas as pd
 
 from data import db_handler as db
 
-os.environ["KAGGLE_USERNAME"] = "horvthdmmrton" #docker env var majd
+os.environ["KAGGLE_USERNAME"] = "horvthdmmrton" #docker envben lesz
 os.environ["KAGGLE_KEY"] = "KGAT_2e7fe800a42750e3587f81735f08628b"
 from kaggle.api.kaggle_api_extended import KaggleApi
 

@@ -5,46 +5,13 @@ import xgboost as xgb
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import cross_val_score, train_test_split
 
-from models.model_parameters import LGBM_PARAMS, RFR_PARAMS, XGB_PARAMS
+from models.model_parameters import LGBM_PARAMS, MANUAL_PARAMS, RFR_PARAMS, XGB_PARAMS
 from models.optuna_parameters import (
     LGBM_SEARCH_SPACE,
     OPTUNA_TRIALS,
     RFR_SEARCH_SPACE,
     XGB_SEARCH_SPACE,
 )
-
-MANUAL_PARAMS = {
-    "RandomForest": {
-    "n_estimators": 50,
-    "max_depth": 6,
-    "min_samples_split": 5,
-    "min_samples_leaf": 2,
-    "bootstrap": True,
-    "max_leaf_nodes": 30
-    },
-
-    "LightGBM": {
-    "n_estimators": 70,
-    "learning_rate": 0.01,
-    "max_depth": 4,
-    "min_child_samples": 12,
-    "subsample": 0.70,
-    "colsample_bytree": 0.72,
-    "reg_alpha": 0.74,
-    "reg_lambda": 0.21,
-    },
-
-    "XGBoost": { "n_estimators": 20,
-    "learning_rate": 0.2,
-    "max_depth": 4,
-    "min_child_weight": 4,
-    "gamma": 3.2,
-    "subsample": 0.93,
-    "colsample_bytree": 0.69,
-    "reg_alpha": 0.38,
-    "reg_lambda": 0.3
-    },
-}
 
 
 def objective_RFR(trial, features, target):

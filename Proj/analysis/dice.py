@@ -52,6 +52,3 @@ def analyze_decision(df: pd.DataFrame, features: pd.DataFrame, target: pd.Series
             f"CO2: {df.loc[row_index, 'co2']}):"
         )
         print(comparison[["version"] + features.columns.tolist()])
-
-if __name__ == "__main__":
-  analyze_decision()

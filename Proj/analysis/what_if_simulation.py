@@ -53,7 +53,3 @@ def predict_and_visualize(df: pd.DataFrame):
         print(f"  Változott predikció: {changed_prediction:.2f}")
         print(f"  Modell CO2 változása: {model_change:.2f}%")
         print(f"  Eltérés a Kaya-változástól: {difference:.2f} százalékpont\n")
-
-
-if __name__ == "__main__":
-    predict_and_visualize()
