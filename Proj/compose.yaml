@@ -1,0 +1,19 @@
+name: co2-analysis
+
+services:
+  pipeline:
+    build: .
+    image: co2-analysis:local
+
+    environment:
+      MPLBACKEND: Agg
+      PYTHONUNBUFFERED: "1"
+      DATABASE_PATH: /app/runtime/database.duckdb
+      OUTPUT_DIR: /app/output
+      KAGGLE_USERNAME: ${KAGGLE_USERNAME:-}
+      KAGGLE_KEY: ${KAGGLE_KEY:-}
+
+    volumes:
+      - ./runtime:/app/runtime
+      - ./data/co2:/app/data/co2
+      - ./output:/app/output
