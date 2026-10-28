@@ -175,7 +175,7 @@ def explain_with_lime(model, training_data, training_labels, instance, target_sc
 
     explanation.as_pyplot_figure()
     plt.tight_layout()
-    show_or_save("gru_time_series")
+    show_or_save("lime_explanation")
 
 
 def explain_with_shap(model, training_data, instance, target_scaler):
@@ -211,6 +211,7 @@ def explain_with_shap(model, training_data, instance, target_scaler):
         feature_names=feature_names,
     )
     shap.plots.waterfall(explanation, max_display=20)
+    show_or_save("shap_explanation")
 
 def process_Xy(df, lookback=10):
     df = df.copy()

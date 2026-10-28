@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -7,7 +10,9 @@ from ydata_profiling import ProfileReport
 def generate_profile_report(df, report_name):
     #YData Profiling
     profile = ProfileReport(df, title=report_name, explorative=True)
-    profile.to_file(report_name + ".html")
+    output_dir = Path(os.getenv("OUTPUT_DIR", "."))
+    output_dir.mkdir(parents=True, exist_ok=True)
+    profile.to_file(str(output_dir / (report_name + ".html")))
 
     #Correlation Matrix
     st.title("Correlation Matrix")
