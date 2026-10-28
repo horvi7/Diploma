@@ -64,9 +64,7 @@ def plot_results(y_test, predictions, model_name):
 
 def predict_and_visualize_time_series():
     df = db.get_from_db("gold_co2_time_series")
-    print("Df: ", df.head())
     x, y, target_years, target_countries = process_Xy(df)
-    print("df cols: ", df.columns.tolist())
     train_x = x[target_years <= 2005]
     train_y = y[target_years <= 2005]
     valid_x = x[(target_years > 2005) & (target_years <= 2014)]
