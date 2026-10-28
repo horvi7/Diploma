@@ -1,0 +1,20 @@
+# Secrets, VCS, local caches
+.git
+.gitignore
+.env
+.env.*
+.vscode
+**/__pycache__/
+**/*.py[cod]
+*.log
+
+# Database is only bind-mounted from host; never bake it into an image.
+runtime/
+database.duckdb
+*.duckdb.wal
+
+# Output is persisted by a bind mount.
+output/
+
+# Kaggle data is mounted separately, do not duplicate large CSVs in image.
+data/co2/
