@@ -72,5 +72,3 @@ def validate_data(df: pd.DataFrame):
     context.checkpoints.add_or_update(checkpoint)
 
     checkpoint.run(batch_parameters={"dataframe": df})
-
-    context.open_data_docs()

@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -13,7 +16,6 @@ from tensorflow.keras import layers
 
 from data import db_handler as db
 from models import trained_models as tm
-
 
 TIME_SERIES_FEATURES = [
     "energy_per_capita",
@@ -58,7 +60,7 @@ def plot_results(y_test, predictions, model_name):
     plt.xlabel('Actual CO2 Emissions')
     plt.ylabel('Predicted CO2 Emissions')
     plt.title(f'{model_name} Predictions')
-    plt.show()
+    show_or_save(f"predictions_{model_name}")
 
 def predict_and_visualize_time_series():
     df = db.get_from_db("gold_co2_time_series")
@@ -134,7 +136,7 @@ def predict_and_visualize_time_series():
     plt.xlabel('Year')
     plt.ylabel('CO2 Emissions')
     plt.legend()
-    plt.show()
+    show_or_save("gru_time_series")
 
     year_to_explain = 2018
     country_to_explain = "Hungary"
@@ -173,7 +175,7 @@ def explain_with_lime(model, training_data, training_labels, instance, target_sc
 
     explanation.as_pyplot_figure()
     plt.tight_layout()
-    plt.show()
+    show_or_save("gru_time_series")
 
 
 def explain_with_shap(model, training_data, instance, target_scaler):
@@ -274,10 +276,24 @@ def print_surrogate_tree(features, target):
     )
 
     plt.title("Surrogate Decision Tree")
-    plt.show()
+    show_or_save("surrogate_tree")
 
 
 def predict_and_visualize(features: pd.DataFrame, target: pd.Series):
     predict_and_visualize_regressor(features, target)
     predict_and_visualize_time_series()
     print_surrogate_tree(features, target)
+
+
+def show_or_save(filename: str) -> None:
+    output_dir = os.getenv("OUTPUT_DIR")
+    if not output_dir:
+        plt.show()
+        return
+
+    destination = Path(output_dir)
+    destination.mkdir(parents=True, exist_ok=True)
+    png = destination / f"{filename}.png"
+    plt.savefig(png, dpi=150, bbox_inches="tight")
+    plt.close()
+    print(f"Saved plot: {png}")
