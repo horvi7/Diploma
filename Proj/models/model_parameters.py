@@ -1,32 +1,32 @@
 MANUAL_PARAMS = {
     "RandomForest": {
-        "n_estimators": 105,
-        "max_depth": 6,
-        "min_samples_split": 9,
-        "min_samples_leaf": 4,
-        "bootstrap": True,
-        "max_leaf_nodes": 24
+         'n_estimators': 92,
+         'max_depth': 19,
+         'min_samples_split': 10,
+         'min_samples_leaf': 1,
+         'bootstrap': True,
+         'max_leaf_nodes': 58
     },
     "LightGBM": {
-        "n_estimators": 105,
-        "learning_rate": 0.011882888130545924,
-        "max_depth": 4,
-        "min_child_samples": 23,
-        "subsample": 0.9390586696763323,
-        "colsample_bytree": 0.6506930125803669,
-        "reg_alpha": 0.9821512272350051,
-        "reg_lambda": 0.11827601292607956
+        'n_estimators': 395,
+        'learning_rate': 0.023039879310004143,
+        'max_depth': 7,
+        'min_child_samples': 30,
+        'subsample': 0.743738653112448,
+        'colsample_bytree': 0.8352067066995073,
+        'reg_alpha': 0.632171864299299,
+        'reg_lambda': 0.09822796931465623
     },
     "XGBoost": {
-        "n_estimators": 381,
-        "learning_rate": 0.11854834150995305,
-        "max_depth": 6,
-        "min_child_weight": 5,
-        "gamma": 4.4277220131081,
-        "subsample": 0.9850997649876527,
-        "colsample_bytree": 0.6318153394672948,
-        "reg_alpha": 0.4635012413919827,
-        "reg_lambda": 0.10254642573937399
+        'n_estimators': 265,
+        'learning_rate': 0.05887131322721688,
+        'max_depth': 10,
+        'min_child_weight': 10,
+        'gamma': 2.029023552289681,
+        'subsample': 0.6227921412463687,
+        'colsample_bytree': 0.6186471014152328,
+        'reg_alpha': 0.8403666683553538,
+        'reg_lambda': 0.01397404059963454
     },
 }
 
