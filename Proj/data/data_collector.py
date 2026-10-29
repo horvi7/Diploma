@@ -1,4 +1,3 @@
-#Prefect el eltt hagyva
 import json
 import os
 
