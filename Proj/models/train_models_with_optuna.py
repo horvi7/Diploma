@@ -112,7 +112,7 @@ def get_best_params_for_models(features, target):
 
 def compare_manual_and_optuna(features: pd.DataFrame, target: pd.Series):
     """Compare manual and saved Optuna parameters by training R2."""
-    x_train, _, y_train, _ = train_test_split(
+    x_train, x_test, y_train, y_test = train_test_split(
         features, target, test_size=0.2, random_state=32
     )
     parameter_sets = {
@@ -131,7 +131,7 @@ def compare_manual_and_optuna(features: pd.DataFrame, target: pd.Series):
         for parameter_name, parameters in parameter_sets.items():
             model = _create_model(model_name, parameters[model_name])
             model.fit(x_train, y_train)
-            score = model.score(x_train, y_train)
+            score = model.score(x_test, y_test)
             results[model_name][parameter_name] = score
             print(f"{model_name} ({parameter_name}): R2={score:.4f}")
 

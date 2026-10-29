@@ -51,11 +51,9 @@ def create_gold_tables() -> None:
     ]].copy()
     gold_co2_df["energy_per_gdp"] = np.log1p(gold_co2_df["energy_per_gdp"])
 
+    gold_co2_df["gdp_per_population"] = np.log1p(gold_co2_df["gdp"] / gold_co2_df["population"])
     gold_co2_df["population"] = np.log1p(gold_co2_df["population"])
     gold_co2_df["gdp"] = np.log1p(gold_co2_df["gdp"])
-    gold_co2_df["gdp_per_population"] = np.log1p(
-        gold_co2_df["gdp"] / gold_co2_df["population"]
-    )
 
     gold_co2_time_series_df = co2_df[[
         "co2", "name", "year", "gdp", "population", "energy_per_capita",
