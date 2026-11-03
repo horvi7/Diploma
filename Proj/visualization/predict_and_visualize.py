@@ -7,6 +7,7 @@ import pandas as pd
 import shap
 from keras.callbacks import EarlyStopping
 from lime.lime_tabular import RecurrentTabularExplainer
+from scipy.linalg import lstsq
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -278,8 +279,26 @@ def print_surrogate_tree(features, target):
     show_or_save("surrogate_tree")
 
 
+def linear_regression(features, target):
+    x_train, x_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=32)
+
+    # x_train = np.column_stack([np.ones(len(x_train)), x_train])
+    # x_test = np.column_stack([np.ones(len(x_test)), x_test])
+
+    coefficients, _, _, _ = lstsq(x_train, y_train)
+    predictions = x_test @ coefficients
+    
+    print(f"Linear Regression R2: {r2_score(y_test, predictions)}")
+    print(f"Linear Regression MSE: {mean_squared_error(y_test, predictions)}")
+    print(f"Linear Regression MAE: {mean_absolute_error(y_test, predictions)}")
+  
+    plot_results(y_test, predictions, "Linear Regression")
+    show_or_save("linear_regression_results")
+
+
 def predict_and_visualize(features: pd.DataFrame, target: pd.Series):
     predict_and_visualize_regressor(features, target)
+    linear_regression(features, target)
     predict_and_visualize_time_series()
     print_surrogate_tree(features, target)
 
