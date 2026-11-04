@@ -1,5 +1,5 @@
 import os
-
+import sys
 import duckdb
 import pandas as pd
 import numpy as np
@@ -46,9 +46,10 @@ def create_gold_tables() -> None:
         return
 
     gold_co2_df = co2_df[[
-        "co2", "gdp", "population", "energy_per_capita", "energy_per_gdp",
+        "co2", "name", "gdp", "population", "energy_per_capita", "energy_per_gdp",
         "primary_energy_consumption"
     ]].copy()
+    gold_co2_df = pd.get_dummies(gold_co2_df, columns=["name"], dtype=int)
     gold_co2_df["energy_per_gdp"] = np.log1p(gold_co2_df["energy_per_gdp"])
 
     gold_co2_df["gdp_per_population"] = np.log1p(gold_co2_df["gdp"] / gold_co2_df["population"])
