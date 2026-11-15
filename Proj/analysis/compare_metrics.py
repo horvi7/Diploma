@@ -1,3 +1,4 @@
+import sys
 from time import perf_counter
 
 import numpy as np
@@ -18,6 +19,40 @@ def print_metric_results(model_name, actual, predictions):
     mae = mean_absolute_error(actual, predictions)
     r2 = r2_score(actual, predictions)
     print(f"{model_name} MSE: {mse}, MAE: {mae}, R2: {r2}")
+    print_metrics_by_emission_range(actual, predictions)
+
+
+def print_metrics_by_emission_range(actual, predictions):
+    emission_ranges = pd.cut(
+        np.asarray(actual),
+        bins=[0, 10, 100, 1000, 10000, float("inf")],
+        labels=["0-10", "10-100", "100-1000", "1000-10000", "10000+"],
+        right=False,
+    )
+    grouped_results = pd.DataFrame(
+        {
+            "actual": np.asarray(actual),
+            "prediction": np.asarray(predictions),
+            "emission_range": emission_ranges,
+        }
+    )
+
+    print("Metrics by CO2 emission range:")
+    for emission_range, group in grouped_results.groupby(
+        "emission_range", observed=False
+    ):
+        if group.empty:
+            continue
+
+        mse = mean_squared_error(group["actual"], group["prediction"])
+        mae = mean_absolute_error(group["actual"], group["prediction"])
+        actual_mean = group["actual"].mean()
+        actual_median = group["actual"].median()
+        print(
+            f"  {emission_range}: count={len(group)}, "
+            f"MSE={mse}, MAE={mae}, "
+            f"actual mean={actual_mean}, actual median={actual_median}"
+        )
 
 
 def print_results(model_name, train_times, throughput_values):
