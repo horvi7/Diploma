@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,12 +33,15 @@ def predict_and_visualize_regressor(features: pd.DataFrame, target: pd.Series):
 
     random_forest_model = tm.get_model('RandomForest', features, target)
     rfr_predictions = random_forest_model.predict(x_test)
+    print_feature_importance("Random Forest", random_forest_model, features)
 
     lightgbm_model = tm.get_model('LightGBM', features, target)
     lgbm_predictions = lightgbm_model.predict(x_test)
+    print_feature_importance("LightGBM", lightgbm_model, features)
 
     xgboost_model = tm.get_model('XGBoost', features, target)
     xgb_predictions = xgboost_model.predict(x_test)
+    print_feature_importance("XGBoost", xgboost_model, features)
 
     rfr_mse = mean_squared_error(y_test, rfr_predictions)
     rfr_mae = mean_absolute_error(y_test, rfr_predictions)
@@ -53,6 +57,18 @@ def predict_and_visualize_regressor(features: pd.DataFrame, target: pd.Series):
     xgb_mae = mean_absolute_error(y_test, xgb_predictions)
     print(f"XGBoost MSE: {xgb_mse}, MAE: {xgb_mae}")
     plot_results(y_test, xgb_predictions, "XGBoost")
+
+
+def print_feature_importance(model_name, model, features):
+    importance = pd.Series(
+        model.feature_importances_,
+        index=features.columns,
+    ).sort_values(ascending=False)
+
+    print(f"\n{model_name} feature importance:")
+    for feature_name, value in importance.items():
+        print(f"  {feature_name}: {value:.6f}")
+
 
 def plot_results(y_test, predictions, model_name):
     plt.figure(figsize=(15, 5))
@@ -258,7 +274,7 @@ def print_surrogate_tree(features, target):
     y_train_for_surrogate = model.predict(x_train)
     y_test_for_surrogate = model.predict(x_test)
 
-    surrogate_model = DecisionTreeRegressor(max_depth=3, random_state=32)
+    surrogate_model = DecisionTreeRegressor(max_depth=5, random_state=32)
     surrogate_model.fit(x_train, y_train_for_surrogate)
     y_test_surrogate_pred = surrogate_model.predict(x_test)
     fidelity = r2_score(y_test_for_surrogate, y_test_surrogate_pred)
@@ -291,12 +307,89 @@ def linear_regression(features, target):
     print(f"Linear Regression R2: {r2_score(y_test, predictions)}")
     print(f"Linear Regression MSE: {mean_squared_error(y_test, predictions)}")
     print(f"Linear Regression MAE: {mean_absolute_error(y_test, predictions)}")
-  
+    print_metrics_by_emission_range(y_test, predictions)
     plot_results(y_test, predictions, "Linear Regression")
     show_or_save("linear_regression_results")
 
 
+def print_metrics_by_emission_range(actual, predictions):
+    emission_ranges = pd.cut(
+        np.asarray(actual),
+        bins=[0, 10, 100, 1000, 10000, float("inf")],
+        labels=["0-10", "10-100", "100-1000", "1000-10000", "10000+"],
+        right=False,
+    )
+    grouped_results = pd.DataFrame(
+        {
+            "actual": np.asarray(actual),
+            "prediction": np.asarray(predictions),
+            "emission_range": emission_ranges,
+        }
+    )
+
+    print("Metrics by CO2 emission range:")
+    for emission_range, group in grouped_results.groupby(
+        "emission_range", observed=False
+    ):
+        if group.empty:
+            continue
+
+        mse = mean_squared_error(group["actual"], group["prediction"])
+        mae = mean_absolute_error(group["actual"], group["prediction"])
+        actual_mean = group["actual"].mean()
+        actual_median = group["actual"].median()
+        print(
+            f"  {emission_range}: count={len(group)}, "
+            f"MSE={mse}, MAE={mae}, "
+            f"actual mean={actual_mean}, actual median={actual_median}"
+        )
+
+
+def plot_austria_predictions(features: pd.DataFrame, target: pd.Series):
+    gold_co2_df = db.get_from_db("gold_co2")
+
+    austria_mask = (
+        gold_co2_df["name_Austria"].eq(1)
+        & gold_co2_df["year"].between(1965, 1999)
+    )
+    austria_df = gold_co2_df.loc[austria_mask].sort_values("gdp_per_capita")
+
+    austria_features = austria_df.drop(columns="co2")
+    actual = austria_df["co2"]
+    gdp_per_capita = np.expm1(austria_df["gdp_per_capita"])
+
+    plt.figure(figsize=(15, 7))
+    plt.plot(gdp_per_capita, actual, color="black", linewidth=2.5, marker="o",
+             label="Actual")
+
+    models = [
+        ("Random Forest", tm.get_model("RandomForest", features, target)),
+        ("LightGBM", tm.get_model("LightGBM", features, target)),
+        ("XGBoost", tm.get_model("XGBoost", features, target)),
+    ]
+
+    for model_name, model in models:
+        predictions = model.predict(austria_features)
+        plt.plot(
+            gdp_per_capita,
+            predictions,
+            linewidth=1.8,
+            marker="o",
+            markersize=3,
+            label=model_name,
+        )
+
+    plt.xlabel("GDP per capita")
+    plt.ylabel("CO2 emission")
+    plt.title("Ausztria CO2 kibocsátása")
+    plt.xticks(gdp_per_capita, rotation=45)
+    plt.legend()
+    plt.tight_layout()
+    show_or_save("austria_1965_1999_predictions")
+    sys.exit(0)
+
 def predict_and_visualize(features: pd.DataFrame, target: pd.Series):
+    plot_austria_predictions(features, target)
     predict_and_visualize_regressor(features, target)
     linear_regression(features, target)
     predict_and_visualize_time_series()
